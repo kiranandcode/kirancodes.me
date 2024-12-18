@@ -1,0 +1,121 @@
+#+TITLE: Unifying fold left and fold right with Prolog
+#+DATE: <2022-08-26 Fri>
+* Unifying fold left and fold right      :prolog:lisp:pearl:
+:PROPERTIES:
+:EXPORT_DATE: <2022-08-26 Fri>
+:END:
+
+Here's a rather cool trick we noticed during a recent discussion in
+the NUS PLSE Lab.[fn:1]
+
+Fold left and fold right... arguably two of the most fundamental
+combinators when it comes to working with lists...
+
+@@html:<div class="body center-text">@@
+*/But are/ fold left /and/ fold right /really all that/ different?*
+@@html:</div>@@
+
+Well... as it turns out, we can actually /unify/[fn:2] these two algorithms into *one* in Prolog! Let's have a look!
+
+** Preliminaries: Functional fold left and right
+
+Let's start by having a look at the traditional implementations of fold left and right:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src ocaml
+let rec fold_left f ls acc = 
+  match ls with 
+  | [] -> acc
+  | h :: t -> fold_left f t (f h acc)
+#+end_src
+#+begin_src ocaml
+let rec fold_right f ls acc = 
+ match ls with
+ | [] -> acc
+ | h :: t -> f h (fold_right f t acc)
+#+end_src
+@@html:</div>@@
+
+While these definitions might seem a little esoteric to the untrained
+eye[fn:6], it turns out they can be used to represent a wide variety
+of list transformations.
+
+Here's an example of using fold left to reverse a list:
+
+#+begin_src ocaml
+fold_left (fun hd tl -> hd :: tl) [1; 2; 3; 4] []
+
+(* - : int list = [4; 3; 2; 1] *)
+#+end_src
+
+Here's an example of using fold right to reverse a list[fn:3]:
+
+#+begin_src ocaml
+fold_right (fun hd tl -> tl @ [hd]) [1; 2; 3; 4] []
+
+(* - : int list = [4; 3; 2; 1] *)
+#+end_src
+
+** Fold right in Prolog
+
+Now, let's look at implementing folds in Prolog[fn:4], starting with fold right[fn:5].
+
+#+begin_src prolog
+fold(F, [], ACC, ACC).
+fold(F, [H|T], ACC, RES) :-
+    call(F, H, ACC, NEW_ACC),
+    fold(F, T, NEW_ACC, RES).
+#+end_src
+
+Here's an example of using it to reverse a list: 
+
+#+begin_src prolog
+snoc(H, RES, T) :- append(T,[H], RES).
+?- fold(snoc, [1,2,3,4], RES, []).
+/* RES = [4,3,2,1] */
+#+end_src
+
+Great! Okay, so, now, how about fold left?
+
+** Plot twist: Fold left *is* Fold right
+
+Well, here's the cool part: We can use the /same/ fold predicate to
+implement *fold left*! All we need to do is to change which variables we
+are querying and which ones we are instantiating:
+
+#+begin_src prolog
+cons(H, T, [H|T]).
+?- fold(cons, [1,2,3,4], [], RES).
+/* RES = [4,3,2,1] */
+#+end_src
+
+An interesting thing to note is that the higher order predicates for
+fold left and fold right also differ in which argument they treat as
+existential and which arguments they instantiate: 
+
+ - for fold left, the list head and accumulator are existential, and the output is instantiated to be a cons.
+
+ - for fold right, the list head and result are existential and the accumulator is instantiated to be an append.
+
+This is quite nice as it mirrors exactly the different recursion
+scheme between the two combinators, where fold left updates the
+accumulator immediately, while fold right recuses on the tail first,
+and then uses the result of the recursive call to update the
+accumulator.
+
+So, fold left, and fold right... not so different after all...
+
+[fn:1] This seems so fundamental that it has likely been observed many
+times before, but it was surprising and cool to me, so I thought I'd
+share!
+
+[fn:2] Pun intended.
+
+[fn:3] A wildly inefficient implementation mind you - don't even think about using this in production!
+
+[fn:4] SWI-Prolog to be specific.
+
+[fn:5] I'm going to name my fold right function fold, for reasons you can probably guess!
+
+[fn:6] Read: someone who's not a functional programmer.
+

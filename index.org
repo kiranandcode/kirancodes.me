@@ -1,0 +1,167 @@
+#+title: Kiran's home page~ - To Proof Maintenance for all and beyond!!!
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[*Publications][Publications]] [[file:art.org][Artwork]] [[file:posts.org][Posts]]
+#+NAV_SECTION: About Me
+#+HIDDEN: true
+
+* Who am I? 
+:PROPERTIES:
+:subtitle: Kiran Gopinathan
+:manual-row: t
+:row-reverse: t
+:END:
+@@html:<div class="grid-column-two-thirds body">@@
+
+Hi, I'm Kiran (she/her)! I am a Postdoctoral Researcher at the
+University of Illinois Urbana Champaign, advised by [[https://dependenttyp.es][Talia
+Ringer]]. Previously I completed my PhD from the National University of
+Singapore advised by [[https://ilyasergey.net/][Ilya Sergey]] in [[https://verse-lab.github.io][VERSE Lab]].
+
+My research focuses on the problem of proof maintenance: developing
+newer and better tools for the maintenance and automation of formal
+verification---the process of using computers to construct
+mathematical proofs about the software correctness---and covers a
+broad range of techniques, such as proof repair, invariant inference
+or automated verification.
+
+Notable highlights of my work include: producing the [[file:pdfs/ceramist-draft.pdf][first formally
+verified proof]] of the probabilistic properties of the [[https://en.wikipedia.org/wiki/Bloom_filter][Bloom Filter]];
+inventing [[file:pdfs/sisyphus-pldi23.pdf][proof-driven testing]], a novel technique that exploits
+fundamental mathematical truths (the [[https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence][Curry-Howard correspondence]]) and
+enables repairing the proofs of real-world programs.
+
+Other fun facts about me: I am a trans woman (egg cracked 12/2023,
+started HRT 20/04/2024); I sometimes make [[https://kirancodes.itch.io/kirans-day-off][games]] in my free time ([[https://kirancodes.itch.io/][my
+itch.io page]]), I'm a hobbyist artist and use [[file:art.org][artwork]] to capture
+aspects of my lived experiences, and sometimes I write [[https://github.com/kiranandcode][code]].
+
+# I completed my undergraduate degree in Computer Science at University
+# College London. In the past, I've worked in a range of CS disciplines,
+# from the design of interoperable data formats to industrial machine
+# learning for insurance companies, though my main focus now lies within
+# the use of formal methods for reasoning about algorithms.
+@@html:</div>@@
+
+@@html:<div class="grid-column-one-third">@@
+[[file:images/selfie.jpeg]]
+@@html:<p class="body figure-caption">A selfie of me~</span>@@
+@@html:</div>@@
+
+** Curriculum Vitae
+The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
+
+** Contact Me
+  Feel free to send me an email at [[mailto:mail+website@kirancodes.me][mail@kirancodes.me]].
+
+  I also post under [[https://bsky.app/profile/kirancodes.me][@kirancodes.me]] on Bluesky! (hey, that's the same domain as this site~)
+
+** Publications
+*** Conference Papers
+- Concurrent Data Structures Made Easy - OOPSLA 2024 [[[file:pdfs/obatcher-oopsla24.pdf][pdf]], [[https://github.com/verse-lab/obatcher_ds/tree/paper-artefact][code]], [[https://github.com/verse-lab/batcher-in-rust][code(rust)]]]
+  @@html:<br/>@@
+  Callista Le, _Kiran Gopinathan_, Koon Wen Lee, Ilya Sergey
+- Adventure of a Lifetime: Extract Method Refactoring for Rust - OOPSLA 2023 [[[file:pdfs/rem-oopsla23.pdf][pdf]], [[https://zenodo.org/record/8124395][code]]]
+  @@html:<br/>@@
+  Sewen Thy, Andrea Costea, _Kiran Gopinathan_, Ilya Sergey
+- Rhombus: A New Spin on Macros Without All the Parentheses - OOPSLA 2023 [[[file:pdfs/rhombus-oopsla23.pdf][pdf]], [[https://github.com/racket/rhombus-prototype][code]]] 
+  @@html:<br/>@@
+  Matthew Flatt, Taylor Allred, Nia Angle, Stephen De Gabrielle, Robert Bruce Findler, Jack Firth, _Kiran Gopinathan_, Ben Greenman, Siddhartha Kasivajhula, Alex Knauth, Jay McCarthy, Sam Phillips, Sorawee Porncharoenwase, Jens Axel Søgaard, Sam Tobin-Hochstadt
+- Mostly Automated Proof Repair for Verified Libraries - PLDI 2023 [[[file:pdfs/sisyphus-pldi23.pdf][pdf]], [[file:pdfs/sisyphus-pldi23-presentation.pdf][slides]], [[https://github.com/verse-lab/sisyphus][code]]]
+  @@html:<br/>@@
+  _Kiran Gopinathan_, Mayank Keoliya, Ilya Sergey
+  @@html:<br/>@@
+  @@html:<span class="tag">ACM SIGPLAN Award</span>@@ Awarded ACM SIGPLAN Distinguished Paper Award
+- Certifying the Synthesis of Heap-Manipulating Programs - ICFP 2021 [[[file:pdfs/CySuSLik-icfp21.pdf][pdf]], [[https://github.com/tygus/suslik][code]]]
+  @@html:<br/>@@
+  Yasunari Watanabe, _Kiran Gopinathan_, George Pîrlea, Nadia Polikarpova, Ilya Sergey
+- Ceramist: Certifying Certainty and Uncertainty in Approximate Membership Query Structures - CAV 2020 [[[file:pdfs/ceramist-draft.pdf][pdf]], [[file:pdfs/ceramist-presentation.pdf][slides]], [[file:pdfs/ceramist-poster.pdf][poster]], [[https://github.com/verse-lab/ceramist][code]]]
+  @@html:<br/>@@
+  _Kiran Gopinathan_, Ilya Sergey
+- FHIR-FLI: An Open Source Platform for Sharing Healthcare Data - ICT4AWE 2018
+  @@html:<br/>@@
+  _Kiran Gopinathan_, Nikolaos Alexandros Kaloumenos, Kinnari Ajmera, Alexandru Matei, Ian Williams, Andrew Davis
+*** Workshop Papers
+:PROPERTIES:
+:class:    "list--spaced"
+:END:
+- Towards Optimising Certified Programs by Proof Rewriting - EGRAPHS 2022 [[[file:pdfs/proof-repair-egraphs2022.pdf][pdf]], [[file:pdfs/proof-repair-presentation-egraphs2022.pdf][slides]]]
+  @@html:<br/>@@
+  _Kiran Gopinathan_, Ilya Sergey
+- GopCaml: A Structural Editor for OCaml - OCaml Workshop 2021 [[[file:pdfs/gopcaml-ocaml21.pdf][pdf]], [[file:pdfs/gopcaml-presentation-ocaml21.pdf][slides]], [[https://github.com/gopiandcode/gopcaml-mode][code]]]
+  @@html:<br/>@@
+  _Kiran Gopinathan_
+- Probchain: Towards Mechanising Probabilistic Properties of a Blockchain - CoqPL 2019 [[[file:pdfs/probchain-coqpl19.pdf][pdf]], [[file:pdfs/probchain-presentation-coqpl19.pdf][slides]], [[https://github.com/certichain/probchain][code]]]
+  @@html:<br/>@@
+  _Kiran Gopinathan_, Ilya Sergey
+** Awards
+- NUS School of Computing [[https://www.comp.nus.edu.sg/programmes/pg/awards/deans/][Dean's Graduate Research Excellence Award]] 2023
+  @@html:<br/>@@
+  Given to senior PhD students who have made significant research achievements during their PhD study.
+- ACM SIGPLAN Distinguished Paper Award, PLDI 2023
+  @@html:<br/>@@
+  Recieved a distinguished paper award for my work on "Mostly Automated Proof Repair for Verified Libraries".
+- Silver Medal for Student Research Competition, PLDI 2020
+  @@html:<br/>@@
+  For poster and presentation on Certifying Bloom Filters.
+** Service
+*** Mentoring, Volunteering and Event Organisation
+  - [[https://sigplan.org/LongTermMentoring/][SIGPLAN-M]] (Long-term External Mentoring for PhD Students and Researchers), 2022-present
+    @@html:<br/>@@
+    Member of the Operations Team
+  - [[https://nus-plse.github.io/][NUS Programming Languages and Software Engineering (PLSE) Website]], 2022-present
+    @@html:<br/>@@
+    Developed and maintained the [[https://nus-plse.github.io/][website]] for NUS's PLSE groups
+    @@html:<br/>@@
+    Designed the [[https://twitter.com/nus_plse/status/1554361400935747584][logo]] for the [[https://twitter.com/nus_plse][NUS PLSE social media account]]
+  - [[https://conf.researchr.org/track/aplas-2022/aplas-2022-papers][Asian Symposium on Programming Languages and Systems]] 2022
+    @@html:<br/>@@
+    Designed the [[https://twitter.com/splashcon/status/1577887044004618242][badges]] given for artefact evaluation results
+  - NUS Programming Languages Mentoring Workshop (PLMW) at OOPSLA 2021
+    @@html:<br/>@@
+    Panellist on the PhD Life Panel
+  - NUS [[https://researchweek.comp.nus.edu.sg/index_Aug2021.html][Computing Research Week 2021]]
+    @@html:<br/>@@
+    Organised and ran NUS' internal research week conference as the Program Chair
+  - [[https://www.easychair.org/cfp/ifl2019][Symposium on Implementation and Application of Functional Languages]] 2019
+    @@html:<br/>@@
+    Served as a Student volunteer
+*** Program Committee Member
+  + ICFP 2025
+  + OCaml Workshop 2023
+  + AIPLANS 2021
+*** External Reviewer
+  + ICSE 2024
+  + OOPSLA 2023 
+  + POPL 2022
+  + ESOP 2022 
+  + CPP 2021 
+  + CPP 2020 
+*** Artefact Evaluation Committee
+  + PLDI 2021 
+  + ICFP 2021
+  + PLDI 2020 
+
+** Teaching
+- CS6217: Topics in Programming Languages & Software Engineering, 2023 - Guest Lecturer
+  @@html:<br/>@@
+  Gave seminar on "Program Logics for Functional Languages"
+- CS5232: Formal Specification and Design Techniques, 2023 - Guest Lecturer
+  @@html:<br/>@@
+  Gave seminar on Dafny and "Introduction to Floyd-Hoare Logic"
+- CS5223: Distributed Systems, 2020-2023 - Teaching Assistant
+- CS4215: Programming Languages Implementation, 2020-2022 - Teaching Assistant
+- CS5218: Principles and Practice of Program Analysis, 2021 - Teaching Assistant
+- CS1010E: Programming Methodology, 2019 - Teaching Assistant
+
+*** Notable Projects & Software
+- Sisyphus: Tool for automated repair of proofs of OCaml programs [[[https://github.com/verse-lab/sisyphus][code]]]
+- Cleango: Clingo bindings and DSL for Lean4 (/10 Stars/) [[[https://github.com/kiranandcode/cleango][code]]]
+- Ceramist: Verified hash-based Bloom Filters in Coq (/120 Stars/) [[[https://github.com/verse-lab/ceramist][code]]]
+- Gopcaml mode: Emacs plugin Structural editing of OCaml code [[[https://github.com/gopiandcode/gopcaml-mode][code]]]
+- Petrol: Typed SQL DSL for OCaml (/85 Stars/) [[[https://github.com/gopiandcode/petrol][code]]]
+- Ego: Pure OCaml E-graphs library  (/50 Stars/) [[[https://github.com/verse-lab/ego][code]]]
+- OCamlot: Activitypub server in OCaml (/64 Stars/) [[[https://github.com/gopiandcode/ocamlot][code]]]
+
+
+
+# @@html:<script src="js/trans_hearts.js"></script>@@
+

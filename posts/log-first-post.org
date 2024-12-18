@@ -1,0 +1,57 @@
+#+TITLE: First post
+#+DATE: <2019-08-12 Mon>
+* First post                                     :introduction:meta:test:
+  :PROPERTIES:
+  :EXPORT_DATE: <2019-08-12 Mon>
+  :END:
+Hi - Welcome to my web-page! This post is merely a test post serving to 
+validate whether the all the functions of my site operate correctly.
+
+The entire site is statically generated using org mode (I may add
+additional php-based post functionality at a later date). There are four 
+main types of pages in the site, each of which has its own custom org html 
+templates.
+
+The four types of pages are:
+ - Index page 
+ - Projects Index page
+ - Post Index page
+ - Post page
+
+The index and projects page have fairly constant structures
+and their generation is done by simply transcribing the general
+content  from simple org-mode documents. 
+
+Post pages (like this one) have a general base template, but are customized to 
+support a greater range of content (images, lists, tables) etc.
+These additional features are mostly achieved by piggybacking off emacs's existing
+html functionality.
+
+We have support for tables:
+
+| Language | Experience |
+|----------+------------|
+| Rust     | V. Good    |
+| Coq      | V. Good    |
+| Python   |  Okay      |
+
+Source code snippets:
+
+#+BEGIN_SRC  html
+<small class="date-time">
+        <time datetime="2019-06-08T00:00:00+00:00">June</time>
+        <time datetime="2019-06-08T00:00:00+00:00">08</time>
+        <time datetime="2019-06-08T00:00:00+00:00">2019</time>
+      </small>
+#+END_SRC
+
+and todos:
+*** TODO Show example of a todo
+
+There are some more features, but I haven't yet explored them all.
+
+* Second post                                             :test:meta:example:
+  :PROPERTIES:
+  :EXPORT_DATE: <2019-08-13 Tue>
+  :END:
+A single page can have multiple posts, each published at seperate dates and with seperate tags.

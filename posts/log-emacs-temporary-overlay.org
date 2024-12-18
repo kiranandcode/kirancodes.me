@@ -1,0 +1,48 @@
+#+TITLE: Temporary overlays in Emacs
+#+DATE: <2020-02-11 Tue>
+* Temporary overlays in Emacs                            :emacs:tutorial:ide:
+  :PROPERTIES:
+  :EXPORT_DATE: <2020-02-11 Tue>
+  :PLEROMA_ID: 9x6Wg7y4uqEHpAFCW8
+  :END:
+For some reason, no-one online seems to have a simple explanation of
+how to setup temporary overlays (think higlights/messages) that
+disappear as soon as the user moves.
+
+This isn't some arcane art - many common emacs packages seem to use
+this kind of functionality, but no one (to my knowledge) has actually
+written this up in a neat format for others to follow.
+
+Disclaimer: I didn't invent this - the following is basically a generalization
+of patterns I've seen in a couple emacs packages (i.e merlin-mode).
+
+** Sit-for
+The key component for implementing this kind of functionality is the
+function ~#(sit-for)#~ provided by emacs which waits for a given time
+or until the user provides input and then runs the provided function:
+ #+BEGIN_SRC lisp
+(sit-for time after-fn)
+ #+END_SRC
+It's usually best to wrap this with an ~#unwind-protect#~ to prevent
+errors bubbling up.
+
+** Full code
+Combining these two components together, we can implement a temporary highlight function as follows:
+ #+BEGIN_SRC lisp
+ (defun temporary-highlight (bounds face)
+   "Temporarily highlight the region BOUNDS with FACE."
+   ;; remove old highlights
+   (remove-overlays nil nil 'temporary-higlight t)
+   ;; create overlay and setup
+   (lexical-let ((overlay (make-overlay (car bounds) (cdr bounds))))
+     (overlay-put overlay 'face face)
+     (overlay-put overlay 'temporary-highlight t)
+     ;; now - keep the overlay around for 60-seconds 
+     (unwind-protect (sit-for 60) 
+         ;; after the timeout/user-input delete overlay
+         (delete-overlay overlay))
+     ))
+ #+END_SRC
+Here we've done it just using a simple single overlay, but you can
+imagine how this might be used to highlight multiple separate sections
+temporarily - i.e highlight all matches.

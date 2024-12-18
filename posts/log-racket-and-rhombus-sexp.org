@@ -1,0 +1,568 @@
+#+TITLE: Racket->Rhombus: To Sexp or not to Sexp?
+#+DATE: <2022-08-22 Mon>
+#+WARNING: This post was written before I began my transition. It may adopt a tone that I no longer feel is appropriate and the page may make use of design that is not consistent with the rest of the site.
+* Racket->Rhombus: To Sexp or not to Sexp?    :racket:lisp:meta:
+:PROPERTIES:
+:EXPORT_DATE: <2022-08-22 Mon>
+:END:
+
+@@html:<div class="center-text">@@
+*/S-expressions are/ beautiful /and/ elegant /and/ perfect.... @@html:<span style="font-size:20px">@@or are they@@html:</span>@@?*
+@@html:</div>@@
+
+Recently, I have had the pleasure of speaking with the venerable
+[[https://www.cs.utah.edu/~mflatt/][Matthew Flatt]] of Racket fame, who happens to be visiting NUS on
+sabbatical.
+
+As part of his visit, he gave a brief seminar on one of the latest
+projects that he and some other Racket developers (racketeers?) have
+been working on - a little Racket language called [[https://github.com/racket/rhombus-prototype][Rhombus]].
+
+If you're not familiar with Rhombus, in short, it's effectively an
+indentation-based dialect of Racket that looks a bit like Python[fn:1]:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+;; Racket code
+(for/list [(x (list "a" "b"))
+           (y (list "c" "d"))]
+  (string-join (list x y) ""))
+
+;; '("ac" "bd")
+#+end_src
+#+begin_src python
+# Rhombus code
+for List:
+   ~each x: ["a", "b"]
+         y: ["c", "d"]
+   x ++ y
+# ["ac", "bd"]
+#+end_src
+@@html:</div>@@
+
+@@html:<span style="font-size:20px">@@ *Whoa now!* @@html:</span>@@ Hold on a second. Don't leave just yet!
+
+Of course, I know that any self-respecting lispers in the audience are certainly wildly
+shaking their heads in disapproval. *How could they not*? Is this not a
+*vile* affront to anything that is *holy* and *sacred*? or is it?...
+
+Well... while my /initial/ reaction was the same, after I had the chance
+to spend some time hacking around with Rhombus code, its distinct
+style actually started to /grow/ on me. While I'm not exactly a convert
+just yet, I can't deny that Rhombus code ain't without its own
+*elegance* and *beauty*, and I can't exactly say I disliked my time with
+the language itself.
+
+In the rest of this blog post, I'll provide a quick introduction to
+Rhombus, look into what makes it different from other Lisps, and
+provide some reflections on my initial experiences with trying out
+Rhombus with a side-by-side Racket-vs-Rhombus case-study on a simple
+"real-world" problem that I was working on. /Can a man learn to live/
+without /parentheses?/ Let's find out!
+
+** What is Rhombus? and what makes it different from other lisps? 
+Rhombus can be thought of as a sort of indentation-based Lisp, so the
+syntax, and its structure follows roughly what you'd expect:
+
+#+begin_src python
+debug: 
+  "hello ~a"
+  bob
+#+end_src
+
+can be thought of as internally being represented as follows:
+
+#+begin_src racket
+(debug (block
+  (stmt "hello ~a")
+  (stmt bob)))
+#+end_src
+
+@@html:<span class="body" style="font-size:20px">@@
+*But it's not quite that simple!*
+@@html:</span>@@
+
+The idea of using /indentation/ to encode /structure/ is a pretty old one,
+and history is littered with the carcasses of many a Lisp that tried
+that route.
+
+@@html:<div class="center-text">@@
+*What makes Rhombus different?*
+@@html:</div>@@
+
+While many a prior Lisp has tried indentation as a replacement for
+parentheses, Rhombus actually opts for a slightly more nuanced
+approach, through a mechanism it calls [[https://plt.cs.northwestern.edu/pkg-build/doc/shrubbery/index.html][Shrubbery]].
+
+Rather than purely using indentation for grouping, Rhombus' Shrubbery
+mechanism uses indentation plus select control characters to imbue
+the input lexical stream with additional structure. This means that
+Rhombus can support both nested blocks and infix operators quite seamlessly:
+
+#+begin_src python
+def f(x):
+  x + x / 2
+#+end_src
+
+Then, following the spirit of its Lisp heritage, Rhombus macros can
+operate on Shrubbery, at an intermediate level between lexing and
+parsing, and thereby offer the user a large degree of freedom to tune
+the language to their liking.
+
+As a result, while Rhombus code is no longer strictly adorned by
+parentheses like its Lisp brethren, it still has some pretty nice
+support for meta-programming:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+;; Racket macro
+(define-syntax (debug stx)
+  (syntax-case stx ()
+    [(_ msg arg ...)
+     #'(printf msg
+          (list (syntax->datum #'arg)
+                arg)
+          ...)] ))
+
+
+(debug "result: ~a" (+ 1 1))
+;; result: ((+ 1 1) 2)
+#+end_src
+#+begin_src python
+# Rhombus macro
+expr.macro
+ | 'encode($arg) $rest ...':
+     let result: "" +& arg
+     values('[$result, $arg]', '$rest ...')
+
+expr.rule
+ | 'debug: $msg $arg ...':
+     'printf($msg, encode($arg) ...)'
+
+debug: "result: ~a" (1 + 1)
+# result: ('(1 + 1)' 2)
+#+end_src
+@@html:</div>@@
+
+** Case study on Parenthesis: tools for a more... civilised age?
+
+So clearly, it seems you don't actually need s-exps to have Lisp-like
+extensible languages.
+
+@@html:<span class="body" style="font-size:30px">@@
+*But, I like them!*
+@@html:</span>@@
+
+Isn't a *fear* of /parentheses/ merely an /affliction/ that *plagues* the
+nascent Lisper? 
+
+Why would any /experienced/ Lisp *aficionado* ever switch
+to Rhombus?
+
+To investigate these questions in a slightly more scientific way,
+let's try write a simple grading script in both Racket and Rhombus (my
+original implementation of this script was in OCaml, and then later
+python).
+
+In the rest of this section, I'll walk through Racket and Rhombus
+programs[fn:3] to perform this simple grading task, and in the
+process, we can explore how the features of these two languages influence
+the way one might code in them.
+
+*** Problem definition
+
+Our problem is as follows:
+
+- Students can form teams of up to three for two assignments.
+- Teams for each assignment should be distinct - i.e a student should
+  have different team members for each assignment.
+
+The data is provided as a collection of csv-files, describing the
+teams for assignment 1 and 2 using the student-ids of each
+team-member, and another that contains the class roster, mapping all
+student-ids to the respective student names and email addresses. The
+output of our program should specify whether there were any invalid
+teams and also print out various miscellaneous statistics about the
+teams.
+
+*** Step 1: Reading CSVs
+As all the  inputs are provided as CSV files, it seems natural to start
+by creating a helper function to encapsulate this process. For bonus
+points, we can also hardcode in the path to the files in the function,
+as this can reasonably be expected to stay constant:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+(define (read-input input)
+  (let ([path (string-join
+                (list "~/grading" input)
+                "/")])
+    (call-with-input-file path
+      (lambda (in)
+        (csv->list (make-csv-reader in)))))
+#+end_src
+#+begin_src python
+def open_csv_file(file):
+  def path: "~/grading/" ++ file
+  with_input_file(
+      path, 
+      fun (ic): 
+        ic |> csv_reader
+           |> csv_to_list)
+#+end_src
+@@html:</div>@@
+
+As we can see, the Rhombus and Racket ended up looking fairly similar[fn:3],
+although the use of the string concatenation operator in Rhombus
+significantly reduces the code size.
+
+The src_python[:exports code]{|>} threading operator isn't a builtin
+feature of Rhombus, but rather something that I quickly hacked
+together as my heart pined for OCaml:
+
+#+begin_src python
+expr.rule
+  | '$exp |> $f': '$f($exp)'
+  | '$exp |> $f $rest ...': '$f($exp) $rest ...'
+  | '$exp |> $f
+          $rest ...':
+     '$f($exp) $rest ...'
+#+end_src
+
+A rather interesting observation to make here is that while I could
+have implemented a similar threading operator in Racket, I opted not
+to, because I /felt/ that the extra syntactic overhead required to write
+the macro would outweigh its benefits, while in Rhombus, the lighter
+syntax actually made me more inclined to use macros[fn:4].
+
+*** Step 2: Collecting student teams
+Using this helper function to read the input csvs, the next step is to
+extract the raw student teams data into a slightly more useful
+encoding for analysis, converting the list of csv records into a list
+of sets of students:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+(define (construct-teams csv)
+  (define (row->team team)
+    (define students (map string-trim team))
+    (list->set students))
+  (map row->team csv))
+
+(define assignment1-teams
+     (construct-teams
+       (read-input "assignment1.txt")))
+(define assignment1-students
+     (apply set-union assignment1-teams))
+;; same for asg 2...
+#+end_src
+#+begin_src python
+def build_team(raw_team):
+   def team: map(string_trim, raw_team)
+   set.of_list(team)
+
+def asg1_teams: 
+     map(build_team, 
+         open_csv_file("assignment1.txt"))
+def asg1_students: 
+     apply(set.union, asg1_teams)
+
+
+# same for asg 2...
+#+end_src
+@@html:</div>@@
+
+In the end, I wound up writing roughly the same code to extract the
+teams. In my opinion, while I disliked the src_python[:exports
+code]{f(arg,...)} syntax for applying functions, the Rhombus code was
+a lot easier to parse at a glance.
+
+A slight annoyance with Rhombus here was the fact that as commas don't
+reset the indentation level, I am forced to make all arguments for a
+function call to be vertically aligned, even when this leads to a
+slightly less pleasant layout.
+
+*** Step 3: Building the student roster
+
+As our listing of teams specify the team members by their student-ids,
+we'll need to also extract the class-roster in order to determine the
+names and emails of the students in each team:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+(struct student-data (name email)
+          #:transparent)
+
+(define (build-student-mapping)
+  (define students
+      (read-input "student-roster.csv"))
+  (define mapping (make-hash))
+  (for ([student students])
+    (match-define (list name id email) 
+                  student)
+    (hash-set! mapping id
+               (student-data name email)))
+  mapping)
+
+(define student-mapping
+          (build-student-mapping))
+#+end_src
+#+begin_src python
+def build_student_mapping():
+   def mapping: MutableMap()
+   for: ~each student: 
+            open_csv_file("student-roster.csv")
+        val [name,id,email]: student
+        mapping[id] := [name,email]
+   mapping
+
+def student_mapping: 
+      build_student_mapping()
+
+
+
+
+
+
+#+end_src
+@@html:</div>@@
+
+Here, we can see the use of Rhombus' for-loop syntax, which merges,
+folds, iterations and maps all into one unified looping
+construct[fn:5]. Additionally, the syntax-sugar for mutable
+assignments also helps to keep the overhead for map-updates down,
+making the code easier to understand.
+
+*** Step 4: Finding invalid teams
+
+Preparations now out of the way, we come to the main meat of this
+program: the code to actually check whether any students have same
+team members between assignments.
+
+The algorithm itself is pretty simple: iterate through all teams in
+assignment 1 and 2, and check that the size of any intersection of
+teams between assignments is always less than 1:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+(define (find-invalid-teams)
+  (define invalid-teams '())
+  (for ([asgn1-team assignment1-teams])
+    (for ([asgn2-team assignment2-teams])
+      (define overlap 
+             (set-count 
+                 (set-intersect
+                     asgn1-team
+                     asgn2-team)))
+      (when (> overlap 1)
+        (set! invalid-teams 
+             (cons asgn1-team invalid-teams))
+        (set! invalid-teams
+             (cons asgn2-team invalid-teams))
+        )))
+  invalid-teams)
+
+(define invalid-teams (find-invalid-teams))
+#+end_src
+#+begin_src python
+def find_invalid_teams():
+ for values(invalid_teams=[]):
+  ~each a1_team: asg1_teams
+  ~each a2_team: a2_teams
+  ~when set.count(a1_team *&& a2_team) > 1
+  a1_team :: a2_team :: invalid_teams
+
+def invalid_teams: find_invalid_teams()
+
+
+
+
+
+
+
+
+
+
+#+end_src
+@@html:</div>@@
+
+Okay, so hands down, for this small example, the Rhombus code comes
+out to be leagues more concise and easy to grep than the Racket one,
+although, granted, some of the fault is my own inexperience with
+Racket, as the mutation in the Racket code can be eliminated by more
+judicious use of Racket's list libraries.
+
+The Rhombus code also makes use of another OCaml-inspired macro to
+describe cons operations in a slightly more natural form:
+#+begin_src python
+expr.rule
+ | '$hd :: $tl $rest ...': 'List.cons($hd, $tl $rest ...)'
+#+end_src
+The macro itself is a little bit nuanced - in order to capture the
+right-associativity of cons, I've implemented the macro as a
+transformation that rearranges the lexical stream src_python[:exports
+code]{'$hd :: $tl $rest ...'} to the form src_python[:exports
+code]{'List.cons($hd, $tl $rest ...)'} - in other words, everything
+after the double-colon actually gets placed inside the second
+argument.
+
+For the case of left-associative operators, Rhombus actually provides
+some simple syntax sugar for quickly defining them:
+#+begin_src python
+operator (a *&& b): set.intersect(a,b)
+operator (a *|| b): set.union(a,b)
+operator (a *~~ b): set.subtract(a,b)
+operator (a *^^ b): set.symmetric_difference(a,b)
+#+end_src
+These set-operators, while a little esoteric, have quite a compound
+impact, and actually end up not only simplifying this part, but every
+subsequent step as well.
+
+*** Step 5: Printing output
+Our last step is to print out the results - if there were any invalid
+teams, then for each invalid team, print out the details of each
+student in the team:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+(define (print-team-details team)
+  (define (print-student-details student)
+    (define student-info
+       (hash-ref student-mapping student))
+    (printf "\t~a: ~a, ~a\n" student
+           (student-data-name student-info)
+           (student-data-email student-info)))
+  (printf "Team ~a:\n" team)
+  (for ([student team])
+    (print-student-details student)))
+
+(when (> (length invalid-teams) 0)
+  (println "Found invalid teams")
+  (for ([team invalid-teams])
+    (print-team-details team)))
+#+end_src
+#+begin_src python
+when List.length(invalid_teams) > 0
+ | printf("NOTE: found ~a INVALID teams.\n", 
+          List.length(invalid_teams)) 
+   for: ~each team: invalid_teams
+        printf("Invalid team: ~a\n", team)
+        ~each student: team
+        val [name,email]: student_mapping[student]
+        printf("\t~a: ~a, ~a\n", student, name, email)
+
+
+
+
+
+
+
+#+end_src
+@@html:</div>@@
+
+When writing the Rhombus code, I naturally ended up inlining the
+helper functions - presumably, because the syntactic overhead was
+lighter, this time I intuitively /felt/ the code would still be readable
+even without splitting it out into a separate function.
+
+Finally, we can print out some summary statistics for the overall
+class:
+
+@@html:<div class="code-side-by-side">@@
+#+begin_src racket
+(printf "Total students: ~a = ~a seen + ~a unseen\n"
+   (set-count all-students)
+   (set-count
+    (set-intersect all-students all-seen-students))
+   (set-count
+    (set-subtract all-students all-seen-students)))
+
+(printf "~a completed\n"
+  (set-count 
+     (set-intersect
+         assignment1-students
+         assignment2-students)))
+#+end_src
+#+begin_src python
+show_stats "Total roster ~a = ~a seen + ~a unseen":
+    all_students
+    seen_students
+    (all_students *~~ seen_students)
+
+show_stats "~a completed": 
+   (asg1_students *&& asg2_students)
+
+
+
+
+
+#+end_src
+@@html:</div>@@
+
+Once again, the lower burden to writing macros in Rhombus left me with
+more freedom to experiment, and so, when writing the Rhombus code, I
+ended up using an additional macro to simplify the printing code:
+
+#+begin_src python
+expr.macro
+  | 'show_stats $text: $arg ...':
+     values('printf($text ++ "\n", set.count($arg), ...)', '')
+  | 'show_stats $text:
+       $arg
+       ...':
+     values('printf($text ++ "\n", set.count($arg), ...)', '')
+#+end_src
+
+** Conclusion: Sexp-o, ergo sum? Racket vs Rhombus
+
+So. What did we learn? Well... I guess maybe, sometimes, once in a
+while, once in a blue moon, now and then, we might not *need* to use
+s-exps and parentheses in our Lisps?
+
+More seriously, playing around with Rhombus was a great deal of
+fun. The language is really in a prototype stage at the moment, and
+the error messages aren't always super clear, but even at this point,
+you really do get the same wondrous feeling of empowerment to write
+your own language that is common to all Lisps.
+
+In terms of critisisms, aside from the second-class editing support in
+GNU+Emacs compared to Dr.Racket, my main pain point while writing
+Rhombus was an *increased difficulty in doing REPL-based
+development*.
+
+In particular, in other Lisps, I often find it easy to quickly
+prototype ideas by iteratively pasting sub-expressions (delineated by
+parentheses) into the REPL to analyze and debug what any given piece
+of code is doing. In contrast, when writing Rhombus code, as there are
+fewer lexical markers to denote the start and end of sub-expressions, I
+inevitably ended up shifting to a more mundane workflow, wherein I would just run
+the whole script in its entirety after each change.
+
+For me personally, as a veritable OCaml connoisseur, this wasn't a
+huge deal-breaker as it's a workflow that I'm already quite
+comfortable with. However, looking forwards to the future of Rhombus,
+given the great emphasis many Lisp developers place on the virtues of
+their REPL-based workflows[fn:6], this likely a problem that may need to be
+addressed if Rhombus is hoping to make inroads on any existing lisp
+communities.
+
+[fn:1] In fact, it looks so much like python, that I'm using Emacs'
+python-mode to do the appropriate syntax highlighting for my Rhombus
+snippets, and it seems to do okay, barring a few highlighting
+artefacts.
+
+[fn:2] This entire website for goodness sake is generated by a
+customised GNU+Emacs org-mode export function.
+
+[fn:3] While it would technically be possible to transliterate between
+the two languages, in this case, each program was written from scratch
+without reference to the other.
+
+[fn:4] Whether that's a good thing or bad thing you decide.
+
+[fn:5] Flashbacks to Common lisp's infamous loop construct should be
+firing about now, although I've been told Rhombus' one is a lot nicer.
+
+[fn:6] Having spoken to Matthew, it was surprising to find out that
+many of the core Rhombus developers don't actually use REPL-based
+workflows, which likely has coloured the direction of Rhombus itself.

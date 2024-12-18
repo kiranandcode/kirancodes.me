@@ -1,0 +1,689 @@
+#+TITLE: Petrol: embedding a type-safe SQL API in OCaml using GADTs
+#+DATE: <2023-03-23 Thu>
+* Petrol: embedding a type-safe SQL API in OCaml using GADTs :ocaml:types:sql:api:design:
+:PROPERTIES:
+:EXPORT_DATE: <2023-03-23 Thu>
+:PUBDATE: <2019-11-18 Mon>
+:END:
+:LOGBOOK:
+- Note taken on [2023-03-31 Fri 18:38] \\
+  Completed section on GADT based encoding
+CLOCK: [2023-03-31 Fri 17:10]--[2023-03-31 Fri 18:38] =>  1:28
+- Note taken on [2023-03-29 Wed 19:43] \\
+  - Completed section on a macro based approach
+CLOCK: [2023-03-29 Wed 18:00]--[2023-03-29 Wed 19:42] =>  1:42
+CLOCK: [2023-03-28 Tue 20:10]--[2023-03-28 Tue 20:31] =>  0:21
+- Note taken on [2023-03-28 Tue 19:28] \\
+  - Wrote intro
+CLOCK: [2023-03-28 Tue 17:00]--[2023-03-28 Tue 19:00] =>  2:00
+CLOCK: [2023-03-28 Tue 16:59]--[2023-03-28 Tue 17:49] =>  0:50
+- Note taken on [2023-03-23 Thu 19:26] \\
+  Conducting a survey of existing OCaml sql interfaces
+:END:
+
+Databases are cool! Writing and maintaining interfaces between an
+OCaml application and a SQL database? Generally less awesome.
+
+Broadly speaking, this is because:
+
+#+begin_quote
+a) many SQL interfaces don't support checking of SQL operations
+   without running them,
+#+end_quote
+
+and
+
+#+begin_quote
+b) SQL operations themselves are usually tightly coupled to the logic
+   and data of a larger program, making them hard to run and test in
+   isolation.
+#+end_quote
+
+Putting this all together, we end up with statements that can easily
+become out of date with the underlying tables as they change, and
+problems that only show up at runtime when the erroneous queries are
+actually sent to the database.
+
+Recently, I've been building a [[https://github.com/gopiandcode/ocamlot][large SQL-based application]] in OCaml,
+and have found myself brushing against this problem with the libraries
+in the OCaml ecosystem, which mostly all fall into this pitfall,
+typically trusting user-provided annotations and delegating
+correctness checks to runtime (we will provide a more detailed
+comparison [[id:06540f94-9786-4768-ab36-cf7c8da89afc][near the end]]).
+
+After hitting SQL errors for the umpteenth time, this prompted me to
+investigate alternative embeddings of SQL in OCaml, and eventually
+culminated in a new *type-safe* embedded SQL API for OCaml: [[https://github.com/Gopiandcode/petrol][Petrol]][fn:2]
+
+Notably, Petrol provides an ergonomic OCaml API that mirrors SQL's
+syntax, using a mixture cool features of OCaml, including GADTs and
+polymorphic variants, to statically enforce the well-typedness of
+queries and thereby eliminate any encoding or decoding related errors
+occurring at runtime time:
+
+#+begin_src ocaml
+Query.select Expr.[name;age] ~from:t
+|> Request.make_many
+|> Petrol.collect_list db
+#+end_src
+
+In the rest of this blog post, I'm going to present an overview of the
+different approaches to SQL embeddings that I considered in my
+journey, and how the various language features of OCaml helped to
+eventually lead to Petrol.
+
+** The status quo: Caqti
+
+Let's start by taking a look at what is the standard approach for
+interfacing with SQL in OCaml: the [[https://github.com/paurkedal/ocaml-caqti][Caqti]] library.
+
+Caqti provides a high-level generic interface over SQL databases ---
+SQL statements and queries are embedded as strings and annotated with
+appropriate types, and Caqti then automatically translates this into
+low-level operations that interact with the specific FFIs exposed by
+various database connectors.
+
+Here is an example of how Caqti query are usually expressed[fn:3]:
+#+begin_src ocaml
+Caqti_request.find T.Std.int64 T.Std.(tup2 int64 string) {|
+SELECT id, username
+FROM Users
+WHERE id = ?
+|}
+(* - : (int64, int64 * string, [ `One ]) Caqti_request.t *)
+#+end_src
+
+Okay. That's quite a mouthful. What exactly does it mean?
+
+In a nutshell, src_ocaml[:exports code]{Caqti_request.find} is a
+function that takes a 3 arguments and produces an SQL statement:
+
+1. an input type $t_{\text{in}}$ --- here, a single integer of type src_ocaml[:exports code]{T.Std.int64},
+
+2. an output type $t_{\textit{out}}$ --- a tuple of an integer and a string, captured by src_ocaml[:exports code]{T.Std.(tup2 int64 string)},
+
+3. a string $s$ encoding a SQL statement with holes indicated by =?= -- for our example, the operation is the following simple SQL query:
+#+begin_src sql
+SELECT id, username
+FROM Users
+WHERE id = ?
+#+end_src
+
+Provided these arguments, the function returns a value of type
+src_ocaml[:exports code]{Caqti_request.t}, which provides a reified
+encoding of the requested SQL operation, and can then be evaluated
+given a database connection and appropriate input values, and will
+then return values of the declared output type. In this case, the use
+of src_ocaml[:exports code]{Caqti_request.find} reflects the fact that
+we expect our query to return only one row as a result, Caqti provides
+the functions src_ocaml[:exports code]{Caqti_request.find_opt} and
+src_ocaml[:exports code]{Caqti_request.collect_list} for cases in
+which zero or one or many rows are expected.
+
+The key difficulty with working with Caqti here is that both the input
+types and output types are only checked at runtime:
+ - you have fewer input types than holes in your query? *things go wrong*
+ - if your rows have more values or different types than declared? *bad things will happen*
+
+For a query as simple as the one above, manually checking the query is
+correct is fairly straightforward, but as you start introducing more
+and more complex operations into your code, manual inspection starts
+to become a far less appealing strategy:
+
+#+begin_src ocaml
+Caqti_request.find
+T.Std.(tup4 int64 int64 timestamp (tup2 int int)) T.Std.(tup2 int64 string) {|
+SELECT id, public_id
+FROM Follows
+WHERE (target_id = ? OR author_id = ?) AND DATETIME(COALESCE(updated, created)) <= ? AND pending = TRUE
+ORDER BY DATETIME(COALESCE(updated, created)) DESC
+LIMIT ? OFFSET ?
+|}
+(* - : (int64 * int64 * int * (int * int), int64 * string, [< `Many | `One | `Zero > `One ]) Caqti_request.t *)
+#+end_src
+
+In the project that served as the impetus for this post, I had several
+such queries of equal or greater complexity, and eventually found my
+productivity grind to a halt as my time became dominated with fixing
+errors as the SQL wrappers became outdated.
+
+Can we do better?
+
+** A preliminary solution: macros
+
+The problem we're facing is that our queries are only checked when
+they are executed, while maintenance would be easier if this checking
+were instead done at compile time. A natural solution then is then to
+implement this static checking logic as a macro, and this is exactly
+what [[https://codeberg.org/gopiandcode/OCamlot/src/commit/dedd47f3cceb71da86b5a819b32e8db73409b0f0/macros/ppx_sql][I did as my first solution]] --- in the rest of this section, let's
+have a look at such an interface and the problems that it fails to
+address properly.
+
+
+The OCaml macro, henceforth to be referred to as =ppx_sql=, was written
+to entirely sidestep the mismatches that can occur between the code
+and SQL by enforcing a single source of truth in the codebase: a
+single file encoding all the tables in the program.
+
+An example use of the macro looks roughly as follows:
+#+begin_src ocaml
+(* really a ppx call, sugared to look like an expression: *)
+let () = [%sql.declare_schema "../../resources/schema.sql"]
+
+(* generate a wrapper type based on the corresponding table *)
+type%sql.generate activity = SQL [@schema "Activity"]
+#+end_src
+First, the macro must be initialised by informing it where the schema
+declaration file exists -- in the snippet, this is done with the
+string src_ocaml[:exports code]{"../../resources/schema.sql"}.
+
+Once the schema file has been loaded, the macro allows the user to
+automatically generate a new type that encode the rows of a table
+using src_ocaml[:exports code]{%sql.generate}, and using the annotation src_ocaml[:exports code]{[@schema
+"<schema-name>"]} to specify the particular table in question.
+
+At compile time, the macro will read and parse the SQL file (yes, I
+had to implement a [[https://codeberg.org/gopiandcode/OCamlot/src/commit/dedd47f3cceb71da86b5a819b32e8db73409b0f0/macros/ppx_sql/sql/parser.ml][rudimentary SQL parser]] to make this work), and then search
+for a table declaration with the requested name:
+#+begin_src sql
+CREATE TABLE Activity /* t */ (
+  id TEXT PRIMARY KEY /* uuid */,                 -- uuid of the activity
+  raw_data BLOB NOT NULL /* data: yojson */        -- json data
+);
+#+end_src
+The macro uses the same syntax as the dialect of SQL accepted by
+Sqlite3, but allows the user to specify additional information by
+means of specific comments: here, the comments declare that the
+decoded types of the rows should be more constrained than can be
+expressed in SQL --- in particular, the =id= field should be a UUID and
+the =raw_data= should be a JSON object.
+
+Using these annotations, the macro would then automatically generate
+an appropriate data type for the rows of the table, and implement an
+Caqti-compatible encoder and decoder for retrieving rows from the
+database:
+#+begin_src ocaml
+type activity = {
+   id: uuid;
+   data: yojson;
+}
+
+let activity = (* Caqti decode and encode funcitions  *)
+#+end_src
+
+Of course, generating types is nice, but the real motivation is to
+handle queries. As it happens, =ppx_sql= also does this:
+#+begin_src ocaml
+let create ~id ~data (module DB: DB) =
+  (* automatically infer the appropriate Caqti encoding for the query: *)
+  let%sql.query create_activity_request =
+    {| INSERT OR IGNORE INTO Activity (id, raw_data)  VALUES (?, ?) |} in
+  let res = (id,data) in
+  let* () = flatten_error @@ DB.exec create_activity_request res in
+  Lwt.return_ok res
+#+end_src
+
+In the above snippet, we use the src_ocaml[:exports code]{%sql.query}
+macro invocation to run =ppx_sql= and check that the query is a) well
+formed, and b) infer the types of its inputs and outputs. In this
+case, based on the OCaml types that we have declared for the fields of
+the =Activity= table, the macro is able to automatically infer that the
+query takes two arguments, one of type src_ocaml[:exports code]{uuid}
+and the other of type src_ocaml[:exports code]{yojson}. Lastly,
+because the SQL operation is an insert, the macro determines that the
+return type is unit and returns 0 rows.
+
+Note here, when I say infer the types, I do indeed mean infer --- the
+macro implementation actually also contains a lightweight and wildly
+incomplete type inference algorithm for a subset of SQL. This
+inference algorithm recursively traverses the parsed query and
+automatically determines the types of arguments and outputs, and where
+possible, the multiplicity of the output (do we expect zero, one or
+more rows as results):
+#+begin_src ocaml
+let type_of_sql_query_value all_tables (table_map: string StringMap.t) (tables: Types.table list) (value: Query_ast.sql_value) :
+  Query_type.core_type =
+  match value with
+  | Query_ast.C (table_name, column) ->
+    (snd (lookup all_tables table_map tables ?table_name column)).ty
+  | Query_ast.COUNT _ -> int
+  ...
+#+end_src
+
+Putting it all together, we obtain a fairly nice and idiomatic
+interface to SQL that is able to automatically check the correctness
+at compile time, and it even works for some quite hairy SQL
+expressions:
+#+begin_src ocaml
+let collect_follows_for_actor actor_id (module DB: DB) =
+  let%sql.query collect_related_follows_request = {|
+SELECT id, public_id, url, raw_data, pending, created, updated, author_id, target_id
+FROM Follows
+WHERE (target_id = ? OR author_id = ?) AND pending = TRUE
+ORDER BY DATETIME(COALESCE(updated, created)) DESC
+|} in
+  DB.collect_list collect_related_follows_request (actor_id, actor_id)
+  |> flatten_error
+#+end_src
+While implementing this took a bit of engineering, requiring writing a
+parser, type checker and inference engine, once it was up and running,
+it was able to significantly reduce the burden of maintaining any SQL
+interface code.
+
+Overall, this approach is quite similar to a couple of other
+macro-based SQL wrappers in the ecosystem (notably [[https://github.com/roddyyaga/ppx_rapper][=ppx_rapper=]]) --- I
+ended writing my own macro here because the existing approaches don't
+parse individual SQL schema declarations, but rather retrieve the
+table definition from a live database, making it hard to embed in
+source control.
+
+While this embedding served me well for a while, I eventually started
+to also brush up against the limits of this approach:
+
+1. *Can not easily represent migrations* --- because the macro relies on
+   an external schema file to serve as a source of truth, it becomes
+   difficult to reason about changes or migrations of database tables
+   within the host program itself: either the source code would have
+   to persist all prior versions of the schema, leading to massive
+   redundancy, or more complex annotations would need to be designed
+   to encode such versioned changes.
+
+2. *No language support for writing queries* --- Because our macro
+   handles parsing internally and requires SQL operations to be
+   embedded as strings, this means that our embedding is unable to
+   utilise the host languages features to aid developers to check
+   their queries nor can editors provide granular language support
+   when writing queries. This might be seem like a minor concern, but
+   it ended up being a major blocker, because it meant that any
+   changes to the database operations had to first be prototyped in a
+   SQL repl before changing the code.
+
+3. *SQL syntax is insufficiently precise to derive a wrapper* --- Some
+   properties of queries that are required to produce a Caqti query
+   can't easily be statically inferred from just the SQL
+   syntax. Consider the following query as an example:
+       #+begin_src sql
+       SELECT id, created
+       FROM Users
+       WHERE username = ?
+       #+end_src
+    Recall that Caqti queries require specifying the number of
+   expected rows from each query --- answering this question is
+   non-trivial: it depends on how data is inserted into the database
+   in the rest of the program. If our database expects usernames to be
+   unique, then this should return zero or one rows --- if our
+   application is written such that username values always correspond
+   to a row in the table, then this should instead always return one
+   row. If we only consider the syntax of the SQL query when designing
+   the wrapper, then it becomes impossible to determine these more
+   nuanced properties automatically.
+
+Owing to these difficulties, I eventually migrated away from this
+compile-time architecture to a more ergonomic solution...
+
+** A type-safe eDSL using GADTs
+Recall that we came to our macro-based solution because we wanted to
+do custom compile-time checks on our queries, incurring a large
+engineering cost to write our own custom validation and type inference logic.
+In language with a less expressive type system this really would be
+the only option, but, as it turns out, the features provided by
+functional programming languages such as OCaml or Haskell make it easy
+to encode such custom validation logic directly within the programming
+language itself[fn:4].
+
+The mechanism that we will use to enable this is Generalised Algebraic
+Datatypes or GADTs.  Many guides to GADTs can be found online (see the
+[[https://v2.ocaml.org/manual/gadts-tutorial.html][OCaml manual]] or [[https://dev.realworldocaml.org/gadts.html][Real World OCaml]] as two popular examples) --- a proper
+introduction to the concept is outside the scope of this post. The
+rest of this section will continue assuming that the reader has at
+least a basic understanding of the concept, and illustrate a typed SQL
+DSL encoding in OCaml.
+
+At a high level, GADTs extend the type system to allow constraining
+the type parameters of a datatype by its constructors:
+#+begin_src ocaml
+type 'a ty = 
+  | INTEGER : int ty
+  | REAL: float ty
+  | TEXT : string ty
+  | BOOLEAN: bool ty
+  ...
+#+end_src
+Here, this src_ocaml[:exports code]{ty} type encodes a number of
+common SQL types and uses the type parameter to encode their
+corresponding OCaml representation --- for example, integers in SQL,
+are encoded in this type using the constructor src_ocaml[:exports
+code]{INTEGER}.  The type of this constructor is explicitly
+constrained to be src_ocaml[:exports code]{int ty} reflecting the fact
+that SQL integers are represented in OCaml by src_ocaml[:exports code]{int}s.
+
+For the simple type above, it can be hard to see the benefits of
+GADTs, which really only kick in when you have more complex
+data-types.  One standard examples of such a GADTs is an encoding a
+typed expression language:
+#+begin_src ocaml
+type 'a expr =
+  | ADD : int expr * int expr -> int expr
+  | SUB : int expr * int expr -> int expr
+  | AND : bool expr * bool expr -> bool expr
+  | OR : bool expr * bool expr -> bool expr
+  | CONST : 'a * 'a ty -> 'a expr
+  ...
+#+end_src
+Here, we have a type src_ocaml[:exports code]{'a expr} which represents
+a well typed expression with type src_ocaml[:exports code]{'a}. The
+"well-typedness" of our expressions is actually enforced by types of
+each constructor --- for example, an addition src_ocaml[:exports
+code]{ADD (x,y)} of type src_ocaml[:exports code]{int expr},
+i.e. returning an integer, is itself declared to only take
+sub-expressions that are of type src_ocaml[:exports code]{int expr}.
+
+While working with constructors directly may seem a little
+heavyweight, we can introduce some simple functions over them to
+produce a fairly ergonomic interface that looks almost exactly like
+vanilla OCaml code:
+#+begin_src ocaml
+let i vl = CONST (vl, INTEGER)
+let (+) x y = ADD (x,y)
+
+i 1 + i 10 (* : int expr ==> 1 + 10 *)
+#+end_src
+Hopefully this should be sufficient to give the intuition for the
+standard technique of encoding type-safe DSLs using GADTs, and hint at
+the plan of providing a type-safe API around SQL queries: we define a
+GADT-based encoding of the expressions and statements of SQL and then
+provide helper functions to construct terms in this language. By using
+the type parameters of the GADT to encode the well formedness of our
+terms, we can then use the host language's type system to directly
+check our DSL. Furthermore, as our SQL expressions are simply
+first-class values in OCaml, they can easily be passed around,
+manipulated and abstracted over to simplify writing queries and
+handling meta-operations such as migrations.
+
+Beyond just expressions, the full embedding has to also provide GADT
+types to encode table schemas and SQL statements (SELECT, INSERT
+etc.). We will skip over the encoding of tables as it is fairly
+mundane, however encoding queries requires some nuance:
+#+begin_src ocaml
+type (_, _) query =
+    | SELECT : {
+      exprs: 'a expr_list;
+      where: bool expr option;
+      ...
+     } -> ('a, [> `SELECT]) query
+   | DELETE : { ... } -> (unit, [> `DELETE]) query
+   | UPDATE : { ... } -> (unit, [> `UPDATE]) query
+   | INSERT : { ... } -> (unit, [> `INSERT]) query
+#+end_src
+
+Here, the trick we use is to include an additional parameter to the
+query type src_ocaml[:exports code]{(_, _) query} that statically
+encodes additional information about the query: the first parameter of
+the query represents the return type of the query, and the second
+parameter is a polymorphic variant which captures which particular
+type of query is being executed in the statement (either
+src_ocaml[:exports code]{`SELECT}, src_ocaml[:exports code]{`INSERT},
+src_ocaml[:exports code]{`UPDATE} or src_ocaml[:exports
+code]{`DELETE}).
+
+By then constraining the types of our functions over this second
+parameter, we can then enforce additional well-formedness constraints
+on our typed DSL:
+#+begin_src ocaml
+val where: bool Expr.t -> 
+   ('c, [< `DELETE | `SELECT | `UPDATE ] as 'a) t -> ('c, 'a) t
+
+val order_by : 'b Expr.t -> 
+   ('c, [< `SELECT ] as 'a) t -> ('c, 'a) t
+#+end_src
+Here, a where query is allowed to be applied to src_sql[:exports
+code]{SELECT}, src_sql[:exports code]{UPDATE} or src_sql[:exports
+code]{DELETE} operations, but not src_sql[:exports code]{INSERT}
+following the standard structure of SQL queries. Similarly, the
+src_sql[:exports code]{ORDER BY} can only be applied to
+src_sql[:exports code]{SELECT} operations as expected.
+
+Putting this all together, we can use this technique to construct an
+typed embedded DSL with an idiomatic functional API:
+#+begin_src ocaml
+Query.select
+  Expr.[LocalUser.id; LocalUser.username; LocalUser.password;]
+  ~from:LocalUser.table
+|> Query.where Expr.(like LocalUser.username ~pat:(s pattern) ||
+                     like LocalUser.display_name ~pat:(s pattern))
+|> Query.order_by LocalUser.username
+(* ^ type checker verifies well formedness of our syntax *)
+#+end_src
+Not only do the GADT's type parameters allow us to automate the
+process of encoding and decoding values to and from the database, our
+additional well-formedness constraints statically enforce that our
+queries will correspond to valid SQL syntax, using type inference to
+operate in a way that is transparent to the user. Finally, because our
+encoding of queries is simply a composition of functions, our
+interface is no-longer explicitly tied to SQL's syntax as with our
+macro, and we can introduce small extensions to allow the user to
+specify any information that can not be automatically inferred (such
+as the multiplicity of queries).
+
+** Related work: Other SQL embeddings in OCaml
+:PROPERTIES:
+:ID:       06540f94-9786-4768-ab36-cf7c8da89afc
+:END:
+:LOGBOOK:
+CLOCK: [2023-03-23 Thu 18:27]--[2023-03-23 Thu 19:26] =>  0:59
+:END:
+
+Of course, the techniques presented here aren't anything new: the
+embedding that I have presented in this blog post is a fairly standard
+technique --- the approach of encoding typed DSLs using GADTs is
+something that dates even as far back as their conception; other
+languages with similar type-system features such as Haskell or Scala
+already have had [[https://hackage.haskell.org/package/esqueleto][mature libraries]] providing such support for ages now.
+
+Surprisingly, however, within the OCaml ecosystem, this typed
+embedding for SQL is fairly uncommon in libraries[fn:1].
+
+Let's take a second to look at what other approaches to embedding SQL
+in OCaml are currently available in the ecosystem:
+
+- [[https://github.com/dbuenzli/rel][rel]] -- Unreleased library by the eponymous [[https://erratique.ch/contact.en][Dbunzli]]; it provides a
+  typed embeded DSL, somewhat in the same vein as what has been
+  presented in this post.
+
+  It also follows the direction of defining schemas and types within OCaml directly:
+
+  #+begin_src ocaml
+  let trackId' = Col.v "TrackId" Type.Int trackId
+  let name' = Col.v "Name" Type.Text name
+  let albumId' = Col.v "AlbumId" Type.(Option Int) albumId
+
+  let table =
+    Table.v "Track"
+      Row.(unit row * trackId' * name')
+  #+end_src
+
+  Instead of designing the API to superficially look like SQL, rel
+  instead diverges from SQL's syntax, and instead attempts to provide
+  a dialect-agnostic way of describing the relational query you are
+  trying to perform in an idiomatic way:
+
+  #+begin_src ocaml
+  let person_age ~name =
+    let* p = Bag.table Person.table in
+    Bag.where Text.(p #. Person.name' = name) @@
+    Bag.yield (p #. Person.age')
+  (* corresponds to
+     SELECT p.age 
+     FROM person 
+     WHERE p.name = $1 *)
+  #+end_src
+
+  Finally, Rel also has some optional live database interaction
+  mechanisms --- in particular, a function to attempt to automatically
+  work out the schema for an existing database by using the reflection
+  capabilities most SQL databases usually provide you.
+  
+  #+begin_src ocaml
+  val schema_of_db :
+    ?schema:Rel.Schema.name -> t ->
+    (Rel.Schema.t * string list, error) Stdlib.result
+  (** [schema_of_db db] derives a best-effort schema value for the live
+  database [db]. Note that the tables and rows and internal structure is
+  not functional. It is however sufficient for schema renderings and
+  computing schema changes. *)
+  #+end_src
+
+  Currently Rel is still unreleased and in development, so not ready
+  to be used in anger.
+
+- [[https://github.com/darioteixeira/pgocaml][PG'OCaml]] - a type safe API around postgres databases. It provides a
+  string-embedded ppx-macro for writing SQL queries. The library is
+  interesting in that it requires COMPILE-time access to the database,
+  but as a trade-off, gives you fully automated inference of query
+  parameters.
+
+  #+begin_src ocaml
+  let get name =
+      [%pgsql dbh "select salary from employees where name = $name"]
+  #+end_src
+
+  The main problem with this approach is that it's hard to write code
+  that implements migrations in OCaml, as the code assumes the DB
+  already has the correct schema.
+
+  Finally, PG'OCaml explicitly states that compatibility with other
+  SQL services is explicitly a non-goal:
+
+  #+begin_quote
+  It doesn't work with other databases, nor will it ever work with other databases.
+  #+end_quote
+
+- [[https://github.com/mfp/ocaml-sqlexpr][ocaml-sqlexpr]] - A string-embedded ppx macro that provides a SQL
+  DSL. It doesn't integrate with Caqti and provides its own database
+  interaction code. Inputs and output types of a query are not checked
+  w.r.t a table schema, and rely on the user to keep them up to date.
+
+  #+begin_src ocaml
+  S.iter db (fun (n, p) -> Printf.printf "User %S, password %S\n" n p)
+      [%sqlc "SELECT @s{login}, @s{password} FROM users"];
+  #+end_src
+
+- [[https://github.com/roddyyaga/ppx_rapper][ppx-rapper]] - Another string-embedded ppx macro. Notable in that it
+  vendors the postgres parser to ensure faithful syntax checking, but
+  runs into the same limitations of ocaml-sqlexpr.
+
+  #+begin_src ocaml
+  let users =
+    [%rapper
+      get_opt
+        {sql|
+        SELECT @int{id}, @string{username}, @bool{following}, @string?{bio}
+        FROM users
+        WHERE following = %bool{following} and username IN (%list{%int{ids}})
+        |sql}]
+  #+end_src
+
+- [[https://github.com/j0sh/ocaml-gensqlite][ocaml-gensqlite]] - another string-embedded ppx-macro that requires
+  user to explicitly annotate queries with types and automates the
+  construction of an idiomatic wrapper around the query:
+  #+begin_src ocaml
+  let (_, insert) = [%gensqlite dbh "INSERT INTO users(name, password) VALUES(>@username, >@pass)"]
+  let () = insert ~username:"beakybird" ~pass:"supersecret" ()
+  #+end_src
+
+- [[https://github.com/zshipko/ocaml-ezsqlite][ocaml-ezsqlite]] - ezsqlite implements wrapper over the Sqlite API,
+  queries are submitted as strings, and result types must be
+  explicitly supplied by the user.
+  #+begin_src ocaml
+  let stmt = Ezsqlite.prepare db "CREATE TABLE testing (id INTEGER PRIMARY KEY, a TEXT, b BLOB, c INT, d DOUBLE);" in
+  Test.check t "Create Table Step" (fun () ->
+      Ezsqlite.exec stmt) () in
+  #+end_src
+
+- [[https://github.com/foretspaisibles/lemonade-sqlite][lemonade-sqlite]] - provides a monadic stream based API over a Sqlite
+  db. The library is less concerned about type-safety of queries and
+  more about being able to express stream-like transformations of data
+  in a SQL database ergonomically.
+
+  #+begin_src ocaml
+  let really_insert batch =
+    let ( @ ) = Sqlite.S.append in
+    really_insert_index batch
+    @ really_insert_query batch
+    @ really_insert_response batch
+  in
+  Sqlite.insert
+    (Sqlite.S.(concat (map really_insert stream))) handle
+  #+end_src
+
+- [[https://github.com/mmottl/postgresql-ocaml][postgresql-ocaml]] - low-level wrapper around postgres' C-api. Queries
+  are submitted as strings. No embedded DSL or type-based guidance for
+  the user.
+
+- [[https://github.com/arenadotio/pgx][pgx]] - another postgres API wrapper -- slightly higher level than
+  postgresql-ocaml, but queries are submitted as strings -- no
+  host-language support for ensuring and maintaining SQL queries.
+
+- [[https://ygrek.org/p/sqlgg/][sqlgg]] - somewhat orthogonal tool. Generates driver code (for a
+  variety of backends including OCaml), given a set of SQL schemas and
+  queries. Could be used for migrations as well, but overall somewhat
+  unwieldy, as the SQL queries have to be maintained separately.
+
+** Takeaways
+
+To wrap up, through our goal of interfacing OCaml with SQL, in this
+post, we've explored a number of different ways of embedding a DSL
+such as using plain strings or various kinds of macros, before
+settling on a typed-DSL implementation using GADTs.
+
+While the former approaches are apparently fairly common in the OCaml
+ecosystem, the superficial embedding style typically results in either
+the lack of any static analyses for the DSL, or, a significant amount
+of effort (writing type-inference/checking algorithms) to /re-implement/
+static support in the host DSL.
+
+
+In our case, by following well-known PL practices of using GADTs and
+directly representing the SQL AST in our code, we were able to obtain
+an ergonomic and idiomatic OCaml API to write SQL code, while being
+able to use the type-checking and inference facilities of the host
+language entirely for free.
+
+
+As for a more general takeaway from this investigation, consider the
+following: when programming in functional languages like OCaml, before
+you turn to meta-programming, see if advanced features such as GADTs
+can be used to embed your desired checks within the host language
+directly.
+
+
+TL;DR? OCaml now has a new and shiny typed eDSL for expressing SQL
+tables and queries: https://github.com/gopiandcode/petrol
+
+
+
+[fn:1] At least on the libraries I've seen on opam 
+
+[fn:2] Conceptually, Petrol is the same as existing libraries in other
+programming languages such as [[https://hackage.haskell.org/package/esqueleto][esqletto]] in Haskell or [[https://blog.jooq.org/the-ultimate-sql-dsl-jooq-in-scala/][jooq]] in Scala,
+but such typed embeddings appear to be mostly absent in the OCaml
+ecosystem.
+
+[fn:3] More recently, Caqti has adopted a slightly more ergonomic interface
+to its declaration style, which more closely looks like type
+ascriptions:
+#+begin_src ocaml
+Caqti_request.Infix.(
+    (T.Std.(tup4 int64 int64 int (tup2 int int)) -->* T.Std.(tup2 int64 string)) @:- {|
+SELECT id, public_id
+FROM Follows
+WHERE (target_id = ? OR author_id = ?) AND DATETIME(COALESCE(updated, created)) <= ? AND pending = TRUE
+ORDER BY DATETIME(COALESCE(updated, created)) DESC
+LIMIT ? OFFSET ?
+|})  
+#+end_src
+However, it still suffers from the problem that queries are only checked at runtime.
+
+[fn:4] This also means that we can reuse all of the host langauge's
+type inference and checking capabilities for our domain specific
+language for free.

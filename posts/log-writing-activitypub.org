@@ -1,0 +1,733 @@
+#+TITLE: How I wrote an Activitypub Server in OCaml: Lessons Learnt, Weekends Lost
+#+DATE: <2023-04-19 Wed>
+* How I wrote an Activitypub Server in OCaml: Lessons Learnt, Weekends Lost :ocaml:design:social:activitypub:
+:PROPERTIES:
+:EXPORT_DATE: <2023-04-19 Wed>
+:PUBDATE: <2023-04-19 Wed>
+:END:
+
+It was way back in the summer of 2019 when I first became a member
+(/i.e./ a Fedizen!) of the Fediverse, the distributed social network
+formed by various Free and Libre servers communicating using the
+Activitypub protocol.
+
+There I was, with my newly minted undergraduate degree under my arm,
+embarking upon a PhD in a foreign country, and, having left my family
+and friends far far behind, without anyone to talk to[fn:1].  It was
+then that I stumbled upon Pleroma, Mastadon, and the various nifty
+communities on the Fediverse, and found within them a social network
+that I could actually use and a community that I could truly feel a
+part of.
+
+Four years later, I have finally got round to contributing back to
+this ecosystem that has served me so much, and have written my own
+Activitypub server --- in fact, I am now happily interacting with the
+Fediverse primarily through *my own code!* ([[https://ocamlot.xyz]]).
+
+In this (somewhat sentimental) post, I'm going to take a meandering
+and reflective walk through my journey of implementing an Activitypub
+server in OCaml in a roughly chronological order, recalling the
+challenges and trials I faced and how I overcame them.  Hopefully, the
+observations in this post will be of use to others, either those
+writing their own Activitypub servers to specification-writers
+themselves to understand pain-points in the specification that may
+inhibit implementations.
+
+You can find my implementation here:
+https://github.com/gopiandcode/ocamlot, and can follow me on the
+Fediverse at gopiandcode@ocamlot.xyz!
+** Step 1: A Basic CRUD App
+Every journey begins with a single step, and for me, the [[https://codeberg.org/gopiandcode/OCamlot/commit/9f764c41dbf65d5b21ad81b403caacd072868045][first step]]
+for this project was setting up a basic registration and
+authentication mechanism for the server.
+
+After careful deliberation, I ended up using OCaml's [[https://aantron.github.io/dream/][Dream]] web
+framework for my implementation --- it's a modern web-server library
+for OCaml, and its idiomatic interface should feel quite familiar to
+anyone who's used web frameworks in other languages:
+#+begin_src ocaml
+Dream.run @@ Dream.router [
+  (* ... authentication ... *)
+  Dream.get "/register" handle_register_get;
+  (* ... *)
+
+  (* ... user routes ... *)
+  Dream.get "/user/:username" handle_actor_get;
+  Dream.get "/user/:username/inbox" handle_inbox_get;
+  (* ... *)
+
+  (* static *)
+  Dream.get "/static/**" @@ Dream.static "static";
+  (* ... *)
+]
+#+end_src
+My initial iteration of the server had basic routes for
+authentication, login and registration, viewing users and serving
+static files (as above).  Most of the endpoints at this time were actually just
+stubs --- the only component that was properly implemented was the
+login and registration flows, which mostly consisted of code taken
+from the respective tutorials from the Dream documentation.
+
+While most of this scaffolding was fairly standard and didn't
+require much thought, something that /did/ give some hassle was in
+selecting an appropriate representation of the users of the system.
+The challenge arose from the generality of the Activitypub
+specification itself, which isn't too clear on what particular
+information an "account" must or should have.
+In particular, examples in the Activitypub specification mostly talks
+about the content of messages being sent between servers, providing
+examples as below:
+#+begin_src javascript
+{
+  "@context": ["https://www.w3.org/ns/activitystreams",
+               {"@language": "ja"}],
+  "type": "Person",
+  "id": "https://kenzoishii.example.com/",
+  "following": "https://kenzoishii.example.com/following.json",
+  "followers": "https://kenzoishii.example.com/followers.json",
+  "liked": "https://kenzoishii.example.com/liked.json",
+  "inbox": "https://kenzoishii.example.com/inbox.json",
+  "outbox": "https://kenzoishii.example.com/feed.json",
+  "preferredUsername": "kenzoishii",
+  "name": "石井健蔵",
+  "summary": "この方はただの例です",
+  "icon": [
+    "https://kenzoishii.example.com/image/165987aklre4"
+  ]
+}
+#+end_src
+Given this message and then reading their descriptions, there's a
+reverse engineering process to decipher the actual information that
+has to be maintained within the implementation itself --- for example,
+for a local user, the =liked=, =inbox= and =outbox= fields can probably be
+derived from the user's username.
+
+In the end, I settled on the following datatype as the basic
+representation of users in my system, choosing the fields through a
+process of trial and error and looking at the internal data types of
+other Activitypub implementations:
+#+begin_src ocaml
+type t = {
+  id: int64;                                   (* UNIQUE Id of user *)
+  username: string;                            (* username (fixed) *)
+  password_hash: string;                       (* password (hash) *)
+  display_name: string option;                 (* display name *)
+  about: string option;                        (* about text *)
+  pubkey: X509.Public_key.t;                   (* public key *)
+  privkey: X509.Private_key.t;                 (* private key *)
+}
+#+end_src
+Here, the fields I settled upon were: 1) *id*, an internal integer
+identifier to identify local users, 2) *username*, a string representing
+the handle of a user (i.e. @gopiandcode), 3) **password hash**, hashed
+password, as expected, 4) *display name*, a string used as the display
+name of the user, 5) *about*, the about-me information for a user, 6)
+*pubkey* and 7) *privkey*, the public and private key of the user.
+
+
+The Activitypub-specific fields were the private and public keys, which
+are required to sign Activitypub messages, and the username, display
+name and about fields, which correspond to possible fields in the
+Activitypub =Person= object type.
+
+Overall, the fields ended up being quite similar to most other
+Activitypub implementations that I could find in the wild ([[https://github.com/rustodon/rustodon/blob/master/src/db/models/account.rs#L24][Rustodon]],
+[[https://git.pleroma.social/pleroma/pleroma/-/blob/develop/lib/pleroma/user.ex#L90][Pleroma]], [[https://humungus.tedunangst.com/r/honk/v/tip/f/honk.go#40][Honk]], [[https://github.com/mastodon/mastodon/blob/main/db/schema.rb#L143][Mastodon]], etc.), so it seems a little wasteful that the
+specification itself doesn't really give any hints about this and
+leaves implementors to independently derive this design  themselves.
+
+** Step 2: Picking the low hanging fruits: Webfinger endpoints
+The WebFinger protocol, specified in [[https://www.rfc-editor.org/rfc/rfc7033][RFC 7033]], is a standardised
+mechanism for querying for the users on a server, and serves as the
+core mechanism by which Activitypub servers learn which users are
+present on other servers.  As it happens, supporting WebFinger is
+probably the simplest requirement to satisfy when implementing an
+Activitypub server, and so, naturally, it was the first component of
+federation that [[https://codeberg.org/gopiandcode/OCamlot/commit/38774c25f02239916ca91c13bec07760aff75fab][I implemented]].
+
+The WebFinger protocol operates through HTTP requests to a distinguished
+endpoint =/.well-known/webfinger=:
+#+begin_src ocaml
+Dream.run @@ Dream.router [
+  (* ... *)
+  Dream.get "/.well-known/webfinger" handle_webfinger;
+  (* ... *)
+]
+#+end_src
+
+Queries are encoded through a query parameter "resource" describing
+what is being searched for --- for instance, the RFC includes the
+following as an example of a well-formed webfinger query:
+
+#+begin_src http
+GET /.well-known/webfinger?
+       resource=acct%3Acarol%40example.com&
+       rel=http%3A%2F%2Fopenid.net%2Fspecs%2Fconnect%2F1.0%2Fissuer
+       HTTP/1.1
+Host: example.com
+#+end_src
+
+We expect the query to have the form src_python[:exports code]{acct:<username>@<domain>}, which corresponds to the following regex in OCaml:
+
+#+begin_src ocaml
+Re.(seq [
+  opt (str "acct:");
+  group local_username;
+  char '@';
+  str (Params.domain config)
+])
+#+end_src
+Here src_ocaml[:exports code]{Params.domain} refers to a global
+constant that stores the domain on which the server is hosted.
+
+Upon receiving such a request, if the queried user exists, then the
+server should respond with a JSON object of the following form:
+#+begin_src js
+{
+ "subject": "gopiandcode",
+  "aliases": ["https://ocamlot.xyz/users/gopiandcode"],
+  "links": [ ... ]
+}
+#+end_src
+
+To encode this in OCaml, I wrote a conversion function from local users to a
+WebFinger query JSON response:
+
+#+begin_src ocaml
+let of_local_user actor =
+  let username = Database.LocalUser.username actor in
+  assoc [
+    "subject", string (Configuration.user_specifier username);
+    "aliases", list [ uri (Configuration.user_url username) ];
+    "links", list [
+      profile_page (Configuration.user_profile_page username);
+      activity_json_self username;
+      activitystreams_self username;
+    ]
+  ]
+#+end_src
+
+The src_ocaml[:exports code]{"links"} field contains additional links
+to the user and varies from implementation to implementation. From the
+Activitypub specification it's not clear which additional links are
+absolutely necessary or needed, so again, in the implementation, I
+emit a set of links based on what I have seen previously in the responses from other servers.
+
+
+Putting it all together, the actual implementation of the webfinger
+endpoint is merely a few lines --- extract the username being queried,
+retrieve the user, and then encode as an WebFinger JSON object:
+#+begin_src ocaml
+let handle_webfinger req =
+  let+ queried_resource = Dream.query req "resource" |> or_bad_reqeust in
+  let+ username = resource_to_username config queried_resource in
+  let* local_user = Dream.sql req @@ fun db ->
+    (* lookup user *)
+    Database.LocalUser.lookup_local_user ~username db in
+  let data = 
+    (* convert to activitypub json *)
+    Activitypub.Webfinger.of_local_user config local_user in
+  Dream.json data
+#+end_src
+** Step 3: Learning to Talk with Signed Requests
+Implementing WebFinger makes users on our server visible to the other
+servers on the Fediverse, but actually communicating with them is
+another kettle of fish entirely.  The next big stumbling block that I
+ran into was in constructing appropriately signed requests --- most
+Activitypub implementations require that any POST operations are signed, and will reject any unsigned requests.
+
+In particular, the signature scheme used by Activitypub servers is the
+[[https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12][Signed HTTP Messages Draft Spec]], which requires a server to sign a
+digest of the entire request with a cryptographic
+signature using the private key of the user sending the request.
+
+Unfortunately, the OCaml ecosystem doesn't have any
+libraries that implement signed requests (unlike [[https://docs.rs/http-sig/latest/http_sig/][Rust]], [[https://github.com/go-fed/httpsig][Golang]], [[https://github.com/potatosalad/erlang-http_signature][Erlang]],
+and [[https://github.com/atl/py-http-signature][Python]]) and overall the community is [[https://discuss.ocaml.org/t/interest-in-a-http-sig-library/10518][uninterested in having such a
+library]], and so I had to implement signature signing [[https://codeberg.org/gopiandcode/OCamlot/commit/a8e0e30e4233b9fb032cb37d801b9cf96fe80a7f][myself]]:
+#+begin_src ocaml
+let verify_request (req: Dream.request) =
+  let meth = Dream.method_ req in
+  let path = Dream.target req in
+  let headers = Dream.all_headers req |> StringMap.of_list in
+  let+ signature = Dream.header req "Signature" in
+  let hsig = parse_signature signature in
+
+  (* 1. build signed string *)
+  let@ body = Dream.body req in
+  let body_digest = body_digest body in
+
+  (* signed headers *)
+  let+ signed_headers = StringMap.find_opt "headers" hsig in
+
+  (* signed string *)
+  let signed_string = 
+    build_signed_string ~signed_headers ~meth ~path ~headers ~body_digest in
+
+  (* 2. retrieve signature *)
+  let+ signature = StringMap.find_opt "signature" hsig in
+  let+ signature = Base64.decode signature |> Result.to_opt in
+
+  (* 3. retrieve public key *)
+  let+ key_id = StringMap.find_opt "keyId" hsig in
+  let* public_key = resolve_public_key key_id in
+
+  (* verify signature against signed string with public key *)
+  verify signed_string signature public_key
+#+end_src
+Thankfully, OCaml's crypto ecosystem is fairly mature, so I
+didn't have to do too much, just simply glue together existing
+libraries.
+
+** Step 4: Taming the ugly side of Activitypub with decoders
+At this point, I was now ready to tackle the federation mechanism at
+the heart of the Fediverse: /encoding/ and /decoding/ activitypub requests
+to and from other servers. Again, this turned out to be more of a challenge
+than I first expected.
+
+The Activitypub specification is, unfortunately, pretty much useless
+for the purposes of implementing an interoperable server.
+
+This may seem surprising: the specification, [[https://www.w3.org/TR/activitypub/][here]], paints a
+deceivingly pretty picture of Activitypub conformance, with a guide
+chock-full of examples and helpful tips, such as the nice illustration below:
+
+@@html:<div class="medium-image">@@
+[[file:../images/activitypub-spec-info-image.png]]
+@@html:</div>@@
+
+The problem is that the Activitypub specification, in its formal
+description, is far too general for the purposes of interoperability,
+and allows for an impractically large number of conformant encodings
+of events and operations.
+
+For instance, one annoying feature of the Activitypub specification
+is that most fields can be either an object, or a link that will
+resolve to an object. For example, consider the specification of the
+=inbox= field on any actor (i.e user on the server):
+#+begin_quote
+The inbox is discovered through the inbox property of an actor's profile. The inbox MUST be an OrderedCollection.
+#+end_quote
+An =OrderedCollection= object has a fairly well defined structure, and a
+conformant implementation could include the inbox of a user's posts
+directly in the object for the user itself, however most servers
+expect the inbox field of a user to be a link, and will likely reject
+an actor object where the inbox has been inlined.
+
+More generally, this means that if you choose a particular encoding of
+your objects based on the specification alone, then you might
+construct a Activitypub server that can communicate with itself, but
+will entirely fail to interoperate with other servers.
+
+So clearly, if you want to make an *interoperable* Activitypub server,
+then you have to look at Activitiypub messages from real servers.  The
+problem with this is that you run into a chicken-and-egg situation: in
+order to see real messages, you need to federate with other servers,
+and in order to federate with other servers you need to first be able
+to parse incoming messages.
+
+In the end, the solution I came up with to this conundrum was to leech
+off the excellent tests suites of existing Activitypub servers --- in
+particular, Pleroma's repository has a [[https://git.pleroma.social/pleroma/pleroma/-/tree/develop/test/fixtures][fixtures]] folder
+with a collection of "difficult" Activitiypub messages from various servers:
+#+begin_src javascript
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://ocamlot.xyz/schemas/litepub-0.1.jsonld",
+    {
+      "@language": "und"
+    }
+  ],
+  "actor": "https://ocamlot.xyz/users/multi-mention",
+  "cc": [],
+  "id": "https://ocamlot.xyz/activities/5028bb92-85c7-4196-a2d8-8715be4bb574",
+  "object": "https://ocamlot.nfshost.com/users/example",
+  "state": "pending",
+  "to": [
+    "https://ocamlot.nfshost.com/users/example"
+  ],
+  "type": "Follow"
+}
+#+end_src
+Using the events sourced from these kinds of fixtures, I then was able to write a
+set of decoding functions to ingest Activitypub messages in [[https://codeberg.org/gopiandcode/OCamlot/commit/cc0876ee6e284df8e84aaf8d822107cc0934b05e][this commit]]:
+#+begin_src ocaml
+let follow =
+  let open D in
+  let* () = field "type" @@ constant ~msg:"expected create object (received %s)" "Follow"
+  and* actor = field "actor" id
+  and* cc = field_or_default "cc" (singleton_or_list string) []
+  and* id = field "id" string
+  and* object_ = field "object" string
+  and* state = field_opt "state" (string >>= function "pending" -> succeed `Pending
+                                                 | _ -> fail "unknown status") in
+  succeed {actor; cc; id; object_; state}
+#+end_src
+Here I used OCaml's excellent =decoders= library to manually write
+parsing functions for each Activitypub object into an internal
+representation, at the same time making sure they were able to handle
+all example documents that I had available.
+#+begin_src ocaml
+type follow = {
+  id: string;
+  actor: string;
+  cc: string list;
+  to_: string list;
+  object_: string;
+  state: [`Pending | `Cancelled ] option;
+  raw: yojson;
+} [@@deriving show, eq]
+#+end_src
+While it is possible to automatically derive parsing functions from
+datatype definitions (such as by using [[https://github.com/janestreet/ppx_yojson_conv][=ppx_yojson_conv=]]), it wouldn't
+have been suitable in this case as the decoding process had to be
+adjusted to account for the nuances of the various other server
+encodings. The OCaml hacker [[https://github.com/kit-ty-kate][Kit-ty-kate]] has an older [[https://github.com/kit-ty-kate/ocaml-activitypub][library]] that
+provides Activitypub support using an automatically generated
+approach, although I'm not sure if it has actually been used to write
+an interoperable server.
+
+Finally, The =decoders= library comes has an encoding module which provides an
+idiomatic DSL that I used to /construct/ JSON objects:
+#+begin_src ocaml
+let follow ({ id; actor; cc; object_; to_; state=st; raw=_ }: Types.follow) =
+  ap_obj "Follow" [
+    "id" @ id <: E.string;
+    "actor" @ actor <: E.string;
+    "to" @ to_ <: E.list E.string;
+    "cc" @ cc <: E.list E.string;
+    "object" @ object_ <: E.string;
+    "state" @? st <: state;
+  ]
+#+end_src
+
+** Step 5: To have friends, you must be able to accept their follows!
+At this point in the implementation (at around maybe 1 year of
+on-and-off work in my free time), all the preliminaries were set up,
+and I was ready to actually start building a federating server --- the
+first form of federation that I [[https://codeberg.org/gopiandcode/OCamlot/commit/5a278c1f5928c7074876b7864436e5793e73f581][managed to implement]] was that of
+handling and sending follow requests.
+
+A follow request is initiated when a server POSTs a Follow object to
+the target's inbox:
+#+begin_src ocaml
+  let handle_inbox_post req =
+    (* check request is signed *)
+    let+ () = Http_sig.verify_request req in
+    let user = Dream.param req "username" in
+    let+ data = Dream.body req |> Lwt.map Activitypub.Decode.(decode_string obj) in
+    match data with
+    (* ... *)
+    | `Follow { id; actor; cc; to_; object_; state; raw } ->
+      let username = get_username object_ in
+      let+ target = Dream.sql req (Database.LocalUser.lookup_user ~username)
+                    |> map_err (fun err -> `DatabaseError err) in
+      handle_remote_follow id actor target
+    (* ... *)
+#+end_src
+In order to handle this request, the server should send an Accept object back to the
+author:
+#+begin_src ocaml
+  let handle_remote_follow follow_url author target =
+    (* resolve the author of the follow *)
+    let+ author = resolve_remote_user_by_url (Uri.of_string author) in
+    (* create a follow object locally *)
+    let+ follow = 
+      Database.Follow.create_follow
+        ~raw_data:(Yojson.Safe.to_string data)
+        ~url:follow_url ~author ~target ~pending:false
+        ~created:(CalendarLib.Calendar.now ()) in
+    (* send accept object back to author *)
+    accept_remote_follow follow_url author target
+#+end_src
+
+The process for following ended up being mostly the same, with only
+non-trivial part being ensuring that the request was
+signed:
+#+begin_src ocaml
+let follow_remote_user local ~username ~domain db =
+  let+ remote = resolve_remote_user ~username ~domain db in
+  let+ follow_request = build_follow_request config local remote db in
+  let uri = Database.RemoteUser.inbox remote in
+  let key_id = Database.LocalUser.username local
+               |> Configuration.Url.user_key config in
+  let priv_key = Database.LocalUser.privkey local in
+  let+ resp, body  = signed_post (key_id, priv_key) uri follow_request in
+  let+ body = lift_pure (Cohttp_lwt.Body.to_string body) in
+  Lwt_result.return ()
+#+end_src
+A surprising hiccup that I ran into in this process was in noticing
+that Pleroma servers actually query the users' followers list (at src_bash[:exports code]{/<user>/followers/}) to work
+out if a follow was sent properly, so to be on the safe side, I also implemented this endpoint.
+
+** Step 6: From Following to Viewings Posts and a Feed
+Once you've successfully followed a user, their server will then
+forward their messages to your server, and so, now, with the changes
+up to this point, my testing server began to have a stream of incoming
+Activitypub messages --- I just needed to display them.
+
+The next major milestone in my implementation was in [[https://codeberg.org/gopiandcode/OCamlot/commit/2d487a77d6c7ad42ef5cb9c50363109d03819cec][setting up a feed
+of posts]]; as I had implemented a robust Activitypub message parser
+earlier, there was no difficulty in ingesting the messages and this
+mainly boiled down to writing appropriate functions to collect the
+relevant posts to be displayed. In my case, this was all achieved
+through a few gnarly SQL statements:
+#+begin_src sql
+-- select posts 
+SELECT P.id, P.public_id, P.url, P.author_id, P.is_public, P.summary, P.post_source, P.published, P.raw_data
+FROM Posts as P
+WHERE
+    -- we are not blocking/muting the author 
+    TRUE AND (
+    -- where, we (1) are the author
+    P.author_id = ? OR
+	-- or	we (1) are following the author of the post, and the post is public
+    (EXISTS (SELECT * FROM Follows AS F WHERE F.author_id = ? AND F.target_id = P.author_id) AND P.is_public) OR
+	-- or we (1) are the recipients (cc, to) of the post    
+    (EXISTS (SELECT * FROM PostTo as PT WHERE PT.post_id = P.id AND PT.actor_id = ?) OR
+	 EXISTS (SELECT * FROM PostCc as PC WHERE PC.post_id = P.id AND PC.actor_id = ?)))
+ORDER BY DATETIME(P.published) DESC
+#+end_src
+
+At this point, as a tangent to the Activitypub implementation, I lost
+faith in OCaml's SQL support, and embarked [[file:log-ways-of-sql-in-ocaml.org][on a 3-month hiatus to write a
+better SQL library]], which was then contributed back to the ecosystem.
+** Step 7: Eye on the prize, and the hells of testing Activitypub integration
+At this point, I had a rudimentary server that could follow and view
+posts. There was enough here to start federating with other servers,
+but not enough to actually start dog-fooding and using it
+myself[fn:2]. As such, I didn't want to expose my server publicly, but
+I did want to test it out against other Activitypub implementations.
+My goal, then, was to try and host one of these other server
+implementations locally and test against that --- again, as a common
+pattern in this journey, this was harder than expected.
+
+The main challenge in local hosting of Activitypub servers is in the
+specification's requirement that all endpoints are HTTPS secured ---
+if you're running locally, then you'll need to not only somehow setup
+a self-signed certificate for your local addresses, but also configure
+the servers that you are using to trust these self-signed certs and
+depending on the server this varies in difficulty.
+
+Towards this end, I tried running a number of servers locally. My main
+choices were either Mastadon or Pleroma --- I knew these servers
+relatively widely used, so ensuring compatibility with them would at
+least guarantee interoperability with a sizable portion of the
+Fediverse. Mastadon, I ended up discounting almost immediately, as its deployment
+relies on a complex net of services which I could never
+manage to work out how to make operate properly inside a Docker
+container. 
+
+In the end, I chose Pleroma for my testing, although even this wasn't
+so simple.  While setting up a local network with Pleroma using
+docker-compose was fairly straightforward, I ran into a challenge with
+setting up the certificates. The problem was that it seems that the
+Erlang/Elixir library that Pleroma was using for sending HTTPS
+requests did not use the servers certificate store. As such, I had to [[https://codeberg.org/gopiandcode/OCamlot/src/branch/master/tests/integration_tests/pleroma.patch][vendor
+a patched version of Pleroma]] that disabled HTTPS validation:
+#+begin_src diff
+ defmodule Pleroma.HTTP.AdapterHelper.Hackney do
++  require Logger
++
+   @behaviour Pleroma.HTTP.AdapterHelper
+ 
+   @defaults [
+     follow_redirect: true,
+-    force_redirect: true
++    force_redirect: true,
++    insecure: true
+   ]
+ 
+   @spec options(keyword(), URI.t()) :: keyword()
+#+end_src
+** Step 8: Redesign
+Technically this part isn't really in chronological order as I've been
+continuously iterating on the design of the frontend throughout the
+whole process, but I recall that one of the final big pushes I did was
+in [[https://codeberg.org/gopiandcode/OCamlot/commit/5fc25782e3afe2014350b60a3945236e87c5cd05][finalising my styles]] and the look and feel of the website.
+
+The initial format of the site was a fairly standard web-first design
+using the Bulma framework:
+
+@@html:<div class="medium-image">@@
+[[file:../images/ocamlot-design-1.png]]
+@@html:</div>@@
+
+Very early on, I started feeling that it was too bland or generic, and
+tried to spice things up with a custom dark theme:
+
+@@html:<div class="medium-image">@@
+[[file:../images/ocamlot-design-2.png]]
+@@html:</div>@@
+
+However, this didn't really solve the issue, and eventually the
+generic feeling of the site began to sap my motivation, so I tried
+redesigning the site using the more lightweight Pure-CSS framework: 
+
+@@html:<div class="medium-image">@@
+[[file:../images/ocamlot-design-3.png]]
+@@html:</div>@@
+
+Unfortunately, because I didn't plan this design out ahead of time, as
+I developed the site I kept on adding more and more ad-hoc extensions
+to the theme, and eventually it started to feel incoherent.
+
+As such, before the final release, I took a month or so off and spent
+some time actually properly designing a theme for the site: collating
+and analysing examples of websites that I liked, developing a colour
+scheme that fit my tastes for the site, and selecting unique UI
+flourishes that would serve to give the site an identity:
+
+@@html:<div class="medium-image">@@
+[[file:../images/ocamlot-design-4.png]]
+@@html:</div>@@
+
+Overall, I think it turned out quite well --- the site might not be to
+your liking, but it is certainly to mine!
+
+** Step 9: Putting it all together
+Implementing this server had been a real slog; at every turn in my
+journey, I was running up into unexpected challenges that each set me
+back months: ambiguities in the Activitypub specification,
+shortcomings of the OCaml ecosystem, problems with testing
+instances locally etc. However, at this point in my journey,
+things actually started to heat up, and maybe even become "fun".
+
+As I now had a locally running network of containers to test
+integration[fn:3], the basic internal structure of my website nailed
+down, and a pre-defined theme and design for the site, adding new
+features at this point was fairly quick: they typically only required
+small changes and could be tested quickly.
+
+Adding custom profile pictures [[https://codeberg.org/gopiandcode/OCamlot/commit/cbe4ad95468a19151181f1e3fd401988678b7f37][was straighforward]], and only required
+adding an extra field to my representation of users:
+#+begin_src ocaml
+VersionedSchema.declare_table db ~name:"local_user" [
+  (* ... *)
+   field ~constraints:[
+     foreign_key ~table:UserImage.table ~columns:Expr.[UserImage.path]
+        ~on_update:`RESTRICT ~on_delete:`RESTRICT ()
+   ] "profile_picture" ~ty:Type.text;
+   (* ... *)
+]
+#+end_src
+
+I then added [[https://codeberg.org/gopiandcode/OCamlot/commit/9579db8620d9bb0bfd334d0ab04fd9952f615008][support for posts with images]], which required
+writing an additional decoder to ingest Attachment objects:
+#+begin_src ocaml
+let attachment =
+  let open D in
+  let* media_type = field_opt "mediaType" string
+  and* name = field_opt "name" string
+  and* type_ = field_opt "type" string
+  and* url = field "url" string in
+  succeed ({media_type;name;type_;url}: Types.attachment)
+#+end_src
+
+Similarly, adding [[https://codeberg.org/gopiandcode/OCamlot/commit/dc30d98e844b53b044e8ebf03be946d0d10f4a01][support for likes and reboosts]][fn:4] simply required
+extending the inbox handler:
+#+begin_src ocaml
+let handle_post_cheer req =
+  let public_id = Dream.param req "postid" in
+  let* current_user = current_user req in
+  let* post = sql req (Database.Posts.lookup_by_public_id ~public_id) in
+  Worker.send_task Worker.(LocalReboost {user;post});
+  redirect req
+#+end_src
+
+I then added [[https://codeberg.org/gopiandcode/OCamlot/commit/2fc4f0702a84a0e69a36f181a58a2180cd47f4ec][support for replies]], which required adjusting the message
+handling functions to automatically retrieve post
+targets:
+#+begin_src ocaml
+let rec resolve_remote_note ~note_uri db =
+  (* retrieve json *)
+  let* (_, body) = Requests.activity_req (Uri.of_string note_uri) |> Lwt_result.map_error (fun err -> `ResolverError err) in
+  let* note_res = decode_body ~ty:"remote-note" body ~into:Activitypub.Decode.note
+                  |> map_err (fun err -> `ResolverError err) in
+  log.debug (fun f -> f "was able to sucessfully resolve note at %s!" note_uri);
+  let* n = insert_remote_note note_res db in
+  let* _ = 
+      (* recursively load reply to notes as well *)
+      resolve_remote_note note_res.in_reply_to db in
+  return_ok n
+#+end_src
+
+The last feature I added was [[https://codeberg.org/gopiandcode/OCamlot/commit/27b6c294163e9fc76dc3155a291faa0e62e87489][a proper outbox
+endpoint implementation]], whose pagination logic was mostly a repeat of the feed:
+#+begin_src ocaml
+let handle_outbox_get req =
+  let username = Dream.param req "username" in
+  let* user = Dream.sql req (Database.LocalUser.find_user ~username) in
+  let offset, start_time = (* ... *) in
+  let* outbox_collection_page =
+    Dream.sql req
+      (Ap_resolver.build_outbox_collection_page
+         start_time offset user) in
+  activity_json data
+#+end_src
+
+I'm not actually sure whether the outbox endpoint is actually used,
+unlike the followers one, but my server has it at least.
+
+** Takeaways
+Well, that about wraps up my journey: having implemented all the
+previous steps, I now have a roughly working server; I have 15
+followers, and follow 67 people, I can send posts and reply, and I
+occasionally get interactions, which assure me that my server is still
+federating correctly and I'm not just screaming into the void.
+
+
+After releasing the server, and starting to dog-food the
+implementation, there were a couple of teething hiccups[fn:5], but now
+it's chugging along mostly independently --- you might even say, too
+independently, because I haven't been able to bring myself to fix the
+minor bugs I've noticed since release.
+
+Was it a fun journey? hmm... *No.*
+
+I've been working on this for around 2/3 years on-and-off in my free
+time. Navigating the Activitypub specification and implementations has
+often felt like taking one step forward and two steps back. There have
+been several points at which I've wanted to work on other free-time
+projects, but had to force myself to continue to slave away on this.
+
+However, all in all, I'm /happy to have this done/!
+
+It feels pretty cool to interact with others through your own
+implementation --- due the feature of automatically fetching reply
+chains when receiving a post, after following a few people, the server
+really starts to light up, and I now receive a constant stream of
+messages, making it really feel like a social network.
+
+@@html:<div class="medium-image">@@
+[[file:../images/ocamlot-performance.png]]
+@@html:</div>@@
+
+Also, because the implementation is so bare-bones, it actually has a
+smaller CPU and memory footprint than Pleroma, so probably cheaper to
+host (although, I have noticed some performance spikes whenever I
+interact with Fedi-celebrities).
+
+You can find my implementation here:
+https://github.com/gopiandcode/ocamlot, and can follow me on the
+Fediverse at gopiandcode@ocamlot.xyz!
+
+
+[fn:1] My personal beliefs and ethics dictated that the usual
+predatory and proprietary social media services were not an option.
+
+[fn:2] For one, unfollowing was not yet supported, so the server
+probably would have eventually lead to being ostracised by the
+community.
+
+[fn:3] Previously, I had been testing by uploading my code to a
+private VPS server in Finland, so the debugging cycle was quite
+torturous to say the least.
+
+[fn:4] In my site I call them toasts and cheers for no reason other than because I can.
+
+[fn:5] Such as realising that some servers are configured to require
+signed GET requests as well, which prevented me from interacting with
+[[https://types.pl][types.pl]] for a while.
+

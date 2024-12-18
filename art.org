@@ -1,0 +1,100 @@
+#+title: Kiran's Art work
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]] [[file:art.org][Artwork]] [[file:posts.org][Posts]]
+#+NAV_SECTION: Artwork
+#+HIDDEN: true
+
+* Kiran's Artwork
+:PROPERTIES:
+:subtitle: A few scribbles I've done over time~
+:END:
+
+I like to draw a lot as a hobby in my free time; I find it very
+relaxing, and I love the way that it allows to capture aspects of my
+lived experiences, both as a minority and as a trans woman. Sometimes
+this may come off a bit cringe, but I enjoy it nonetheless.
+
+My art skills are definitely still a work in progress, but I hope you
+enjoy the following gallery regardless:
+
+@@html: <div class="artwork-grid">@@
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lc3xoo5c5c2z" data-bluesky-cid="bafyreidwinklhtleamaibmtagcqpsr6jvvjmdmvmusnrln545n3kc2g7h4"><p lang="en">friendly reminder that if I&#x27;m losing an argument to you online that this is who you are bullying~
+
+#QueerArt #DigitalArt #Trans #MadeWithKrita #Krita #Anime #Manga<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lc3xoo5c5c2z?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lc3xoo5c5c2z?ref_src=embed">November 29, 2024 at 4:08 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lbo4wkvt6k2j" data-bluesky-cid="bafyreicjvxp4vrcup3olpialhzexq2gt2bpodw37o5toqaeks75hkmozai"><p lang="en">sketch~<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lbo4wkvt6k2j?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lbo4wkvt6k2j?ref_src=embed">November 24, 2024 at 4:05 AM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lbmqqqytbc2s" data-bluesky-cid="bafyreib43y3gamaypq4m5346ymahacmdeqj6tws4eqibdrlcubknj23dlu"><p lang="en">Disclaimer: haven&#x27;t watched many victorian dramas (except I guess like villainess isekai mangas ig but idk if they count)
+
+#trans #QueerArt<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lbmqqqytbc2s?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lbmqqqytbc2s?ref_src=embed">November 23, 2024 at 2:54 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lbm2lmqk7s2j" data-bluesky-cid="bafyreiczdxekmz25nry7jtxju2gkcoff54owtovgz22o5k542hxyg3tbxq"><p lang="en">sketch~<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lbm2lmqk7s2j?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lbm2lmqk7s2j?ref_src=embed">November 23, 2024 at 8:18 AM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lb2omf7j2c2c" data-bluesky-cid="bafyreih2bsfi7qkut5cb7yiac6zrkpyc7ve56x6jaxq6tv3pkg43kex3oq"><p lang="en">BNHA True Ending~
+
+#Trans #DigitalArt #Anime #BokuNoHero #TransfemMidoriya #MidoriyaXBakugo #Art #Manga #WebComic #QueerArt #BokuNoHeroAcademia #MyHeroAcademia #MidoriyaIzuku<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lb2omf7j2c2c?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lb2omf7j2c2c?ref_src=embed">November 16, 2024 at 10:28 AM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lajre6eiik2n" data-bluesky-cid="bafyreicmfogonidimnzmjlbsllzfctsiqeees6ykt7ax4gbgbsqcez2amm"><p lang="en">&quot;would you like a hug?&quot;
+
+me:
+
+#trans #trans_artist #queerArt #DigitalArt #Krita #Anime #Manga #Sketch #JJBA #JojosBizzareAdventure<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lajre6eiik2n?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lajre6eiik2n?ref_src=embed">November 9, 2024 at 5:02 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3laix3kwbak2n" data-bluesky-cid="bafyreia4muunj3jimdllg2byi5ufdmswwpmi2sef23gje7jr2ewnq25yam"><p lang="en">transfems only want one thing and it&#x27;s fucking disgustinggg!!!!!!<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3laix3kwbak2n?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3laix3kwbak2n?ref_src=embed">November 9, 2024 at 9:12 AM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lah3zcebpe2p" data-bluesky-cid="bafyreifa5lgavfnyxuquhaahzgy32dkhjuikcodz2kjy5wn2p6kttbdwri"><p lang="en">mood~
+
+#digitalArt #art #anime #manga #sketch #krita #trans #transArtist #queerArt #sketch<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lah3zcebpe2p?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lah3zcebpe2p?ref_src=embed">November 8, 2024 at 3:35 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3labn7joyou2l" data-bluesky-cid="bafyreigy7shr4erejqmodpr7robdy6g3wey5iueugw3dyebrnvji7jeepy"><p lang="en">In light of the recent #USpol events, how it currently feels as a dark skinned minority trans woman immigrating to the US next month...<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3labn7joyou2l?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3labn7joyou2l?ref_src=embed">November 6, 2024 at 11:26 AM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3kqokozztl22g" data-bluesky-cid="bafyreihs4cxxbai2fr5zzknuzxligp7a2fq7utx2eekhep4feowrocbgw4"><p lang="en">Arrrrrr you are a pirate<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3kqokozztl22g?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3kqokozztl22g?ref_src=embed">April 22, 2024 at 12:03 AM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3kpis6ok3dh2c" data-bluesky-cid="bafyreiettgn62udksg4jx5ju5kt3td4k5tojcy6jby3pp45ezd2y6najri"><p lang="en">&quot;Ohoho... just one more thing sir&quot; - Femme Columbo, probably
+
+#columbo #DigitalArt #genderSwap #Krita<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3kpis6ok3dh2c?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3kpis6ok3dh2c?ref_src=embed">April 6, 2024 at 11:36 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ko5byrf7z72c" data-bluesky-cid="bafyreibra4xdvtlwoh2wnbkwrpoxqystk3zpq4hzaownfecc4abafkmzli"><p lang="en">Drew my favorite monkey man!!!
+#DigitalArt #LupinTheThird #Krita #FanArt<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ko5byrf7z72c?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ko5byrf7z72c?ref_src=embed">March 20, 2024 at 4:21 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ko2rjficu22c" data-bluesky-cid="bafyreiffzfntnnt7wt3j4w7xg54ctnrywrrsa4qsajiuuhiah4fg3fhkdy"><p lang="en">Arle Nadja and Carbuncle from Puyo Puyo
+
+#DigitalArt #fanart #puyopuyo<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ko2rjficu22c?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ko2rjficu22c?ref_src=embed">March 19, 2024 at 4:21 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ko2rdtc73h2g" data-bluesky-cid="bafyreidhva3zwq7uw3kfcv65dpmyzazjuhz3rx43sdvirxle7w5o2hgncq"><p lang="en">Drawing of Ron and Toto from Ron Kamonohashi&#x27;s Forbidden deductions.
+
+#rontoto 4 ever, cutest detective couple #drawing #art<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ko2rdtc73h2g?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ko2rdtc73h2g?ref_src=embed">March 19, 2024 at 4:18 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+@@html: </div>@@

@@ -1,0 +1,166 @@
+#+TITLE: Preprocessing in OCaml (using Ppxlib) 
+#+DATE: <2019-12-09 Mon>
+* Preprocessing in OCaml (using Ppxlib) :ocaml:extensionpoints:reference:guide:
+  :PROPERTIES:
+  :EXPORT_DATE: <2019-12-09 Mon>
+  :END:
+Extension points are a functionality provided by the OCaml ecosystem
+to allow developers to define custom semantics for OCaml syntax in
+specific delimited contexts.  While this means that extension-point
+based libraries can not introduce arbitrary new syntax (restricting
+some of the expressivity of such tools), it's been widely accepted as
+a comprimise between extending the semantics of the language while
+preventing the prevalence of esoteric syntax in OCaml codebases.
+
+This much is mentioned on the Ppxlib github repository, but there's notably little 
+documentation on how to actually get started on writing such libraries.
+
+This is where this document comes in.
+
+I have spent the past few days scouring through the sparse ppxlib
+documentation online and have managed to unify this into a single
+guide for getting started with OCaml extension points.
+
+This guide will take you through the entire process - all the way from
+setting up a syntax extension library in dune, to techniques for
+producing useful and constructive error messages.
+
+Let's get started.
+
+** Setting up project 
+ In order to get started with an extension point, create a library dune project with the following stanza:
+ #+BEGIN_SRC dune
+ (library
+  (name <name>)
+  (wrapped false)
+  (kind ppx_rewriter)
+  (libraries ppxlib)
+  (preprocess (pps ppxlib.metaquot ppx_deriving.std)))
+ #+END_SRC
+ Note: you can add this stanza to an existing =dune= file, but in that
+ case you will need a =(library ... (modules <modules>) ..)= field to
+ split modules between your libraries (a module can only be included in
+ a single library).
+
+ Obviously, make sure to install the ppxlib library if you don't already have it.
+** Basic Template
+ The minimal set of code you'll need to get started is as follows:
+ #+BEGIN_SRC ocaml
+ open Ppxlib
+
+ let name = "extension"
+
+ let expand ~loc ~path:_ expr =
+   match expr with
+   | _ -> ignore (Location.raise_errorf ~loc "not implemented"); expr
+
+ let ext =
+   Extension.declare
+     name
+     Extension.Context.expression
+     Ast_pattern.(single_expr_payload __)
+     expand
+
+ let () = Driver.register_transformation name ~extensions:[ext]
+ #+END_SRC
+ This snippet works as follows:
+  - Extension.declare :: defines an ast extension that matches an
+       arbitrary expression (specified by the 3rd argument) and then
+       executes =expand= on the ast. Further constraints on the things
+       it matches can also be made - for example
+       =Ast_pattern.(single_expr_payyload (estring __))= will match
+       only strings.
+  - Driver.register :: registers the extension under then name ="extension"= with the compiler
+  - expand :: in this context is a function that should take an ast and
+              return a transformed ast.
+
+ This template sets up an extension that can be invoked in the following ways:
+ #+BEGIN_SRC ocaml
+ match%extension value with ....
+ [%extension "value", ....]
+ let%extension x = value in ...
+ #+END_SRC
+
+** AST structure and Documentation
+ When defining the =expand= function, the typical strategy is to have
+ your code match some kind of ast structure and then return a modified
+ version of the structure.
+
+ But what is the structure of the AST, and how are expressions
+ represented in this structure?
+
+ I've found two particularly useful strategies for answering these questions:
+  - the dumpast tool
+  - ppxlib "full" documentation
+*** dumpast
+ If you install the =ppx_tools= library from opam, it provides a tool
+ =dumpast= that allows you to see the corresponding ast for a given
+ expression.
+
+ I typically run it from the command line as follows:
+ #+BEGIN_SRC bash
+ ocamlfind ppx_tools/dumpast -e '[1;2;3;4]'
+ #+END_SRC
+ This prints out the ast for the expression =[1;2;3;4]=.
+
+*** ppxlib documentation
+ The Ppxlib library documentation is actually invaluable for working
+ out how ast expressions should look. Unfortunately, rather annoyingly,
+ the only documentation the Ppxlib developers have chosen to precompile
+ and export is the documentation for "how-to-use-this-library" rather than
+ the standard ocamldoc.
+
+ Thus, I'd highly recommend downloading the project and running
+ ocamldoc to build the full documentation.  Alternatively, I've found
+ that this [[http://binaryanalysisplatform.github.io/bap/api/odoc/ppxlib/][binary analysis project documentation]] has also helpfully
+ included a compiled version of the ppxlib documentation, which can be
+ helpful if you're lazy.
+
+** Generating AST values
+ If you look at the earlier dune stanza I recommended, the code for the
+ extension point is preprocessed using ppxlib metaquot library - this
+ library automates some of the process of constructing ast expressions,
+ and I think may be more future compatible than manually constructing
+ the ast terms yourself.
+
+ The general strategy for using the metaquot library is as follows. 
+  - =[%expr ...]= converts an arbitrary static ocaml expression into its corresponding ocaml ast structure - i.e =[%expr [1;2;3;4]]= would expand to the full ast for the expression =[1;2;3;4]=.
+  - within =[%expr _]=, =[%e _]= allows "unquoting" and inserting an
+    arbitrary expression into the static ast constructed by =[%expr
+    _]=. The contents of =[%e _]= should be an ast object.
+ #+BEGIN_SRC ocaml
+ [%expr (Some [%e  ....])]
+ #+END_SRC
+ For example, the following code is how I might recursively convert some kind of ast into a list:
+ #+BEGIN_SRC ocaml
+ [%expr ([%e c1], [%e c2]) :: [%e expand ~loc ... ]]
+ #+END_SRC
+ Notice how I use =[%expr]= to automate constructing the tedious static
+ parts of the AST, and then use =[%e]= at strategic points to insert
+ the custom expressions I want.
+
+ More information on metaquot can be found on the [[https://ppxlib.readthedocs.io/en/latest/ppx-for-plugin-authors.html][ppxlib library]]
+ documentation.
+** Error messages
+ Occasionally, users may invoke your extension in invalid ways, in
+ which case your extension should fail in a sensible way.
+
+ We could throw a custom exception, but this can't be handled by the
+ compiler, and will just result in the entire compilation process
+ crashing with a huge backtrace. Merlin usually reports this kind of
+ failure by claiming that the extension is unknown.
+
+ Instead, to obtain an error that provides a nicer message to the end
+ user, use the =Location.raise_errorf= function to throw an error that
+ can be handled by the compiler - typically I execute it as follows:
+ #+BEGIN_SRC ocaml
+ ignore(Location.raise_errorf ~loc "this is an %s message" "error"); ....
+ #+END_SRC
+** Conclusion
+ This concludes this guide on OCaml extension points.  We've gone
+ through the entire process of building extension points - from setting
+ up the project to developing and returning errors.
+
+ There isn't much documentation online on this topic, so hopefully this
+ has provided a suitable starting point to begin developing OCaml
+ extension points, and I look forward to seeing your extensions.

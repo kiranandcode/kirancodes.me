@@ -1,0 +1,659 @@
+#+LATEX_HEADER: \usepackage{tikz}  \usetikzlibrary{positioning, shapes.symbols, calc, trees} \newcommand{\stirlingsnd}[2]{\left\{\begin{array}{c} #1 \\ #2 \end{array} \right\}} \newcommand{\ncr}[2]{\left(\begin{array}{c} #1 \\ #2 \end{array} \right)}
+#+LATEX_COMPILER: pdflatex
+#+TITLE: Bloom filters debunked: Dispelling 30 Years of bad math with Coq!
+#+WARNING: This post was written before I began my transition. It may adopt a tone that I no longer feel is appropriate and the page may make use of design that is not consistent with the rest of the site.
+#+DATE: <2020-07-23 Thu>
+* Bloom filters debunked: Dispelling 30 Years of bad math with Coq! :projects:research:coq:verification:
+  :PROPERTIES:
+  :EXPORT_DATE: <2020-07-23 Thu>
+  :PUBDATE: <2020-07-23 Thu>
+  :END:
+** Introduction 
+There's this rather nifty feature of modern web browsers (such as
+*Firefox* or *Chrome*) where the browser will automatically warn the
+user if they happen to navigate to a "/malicious/" URL:
+
+@@html:<div class="medium-image body"> @@
+[[file:../images/malicious-site.png]]
+@@html:</div> @@
+
+While /conceptually/ simple, this feature actually requires more
+engineering effort than one would expect - in particular, tracking the
+set of known malicious URLs in a practical manner turns out to be
+somewhat difficult.
+
+This is because, on one hand, trying to store the database of /all/
+known malicious URLs, which, bear in mind, may contain /millions and
+millions/ of entries, is something that is just practically
+infeasible for most users. @@html:<div class="small-image body"> @@
+[[file:../images/database_local.png]] @@html:</div>@@
+
+Conversely, sending /every/ URL that a user visits to some external
+service, where it could be /logged/ and /data-mined/ by nefarious
+third parties, is something that most users should
+probably not be comfortable with.
+
+As it turns out, browsers actually implement this functionality by
+means of a rather interesting /compromise/[fn:5].
+
+Using a probabilistic data structure known as a *Bloom filter*,
+Browsers maintain a approximate representation of the set of known
+malicious URLs locally.  By querying this /space-efficient/ local set,
+browsers will only send up a /small proportion/ of the honest URLs.
+
+@@html:<div class="center-text body">@@
+*/Use a Bloom filter to act as a local proxy for queries to an external database/.*
+@@html:</div>@@
+
+This proxy technique, which safe-guards the privacy of millions of
+users ever day, depends on *two key properties* of Bloom filters:
+
+- No false negatives :: This states that if a query for an URL in the
+     Bloom filter returns negative, then the queried item can be
+     guaranteed to not be present in the set of malicious URLs - i.e
+     /the Bloom filter is guaranteed to return a positive result for
+     all known malicious URLs/.
+
+- Low false positive rate :: This property states that for any URL
+     that is /not in the set of malicious/ URLs, the likelihood of a
+     Bloom filter query returning a positive result should be /fairly
+     low/ - thus minimising the number of /unnecessary/ infractions on
+     user privacy.
+
+This mechanism works /quite/ well, and the guarantees of a Bloom filter
+seem to be perfectly suited for this particular task, however it has
+one small problem, and that is:
+
+@@html:<div class="center-text body">@@
+*/The/ widely cited expression /for the/ false positive rate /of a bloom filter is/ wrong!*
+@@html:</div>@@
+
+In fact, as it turns out, the behaviours of a Bloom filter have
+actually been the subject of 30 years of mathematical contention,
+requiring /multiple/ corrections and even /corrections of these
+corrections/.
+
+*Given this history of errors, can we really have any certainty in our
+understanding of a Bloom filter at all?*
+
+Well, /never fear/, I am writing this post to inform you that we have
+just recently used ~Rocq~ to produce the /very first/ *certified* proof
+of the false positive rate of a Bloom filter, finally putting an end to
+this saga of errors and returning certainty (pardon the pun[fn:1]) to a
+mechanism that countless people rely on /every single/ day.
+
+In the rest of this post, we'll explore the main highlights of this
+research, answering the following questions:
+- What is a Bloom filter?
+- Why did these errors initially arise?
+- What is the true behaviour of a Bloom filter? and how can we be certain?
+
+This research was just recently presented at CAV2020 under the title
+"Certifying Certainty and Uncertainty in Approximate Membership Query
+Structures", you can find the paper [[https://www.springerprofessional.de/en/certifying-certainty-and-uncertainty-in-approximate-membership-q/18186934][here]], and a video presentation of
+it [[https://invidio.us/D80VCsVeCMs?t=4482][here]].
+
+The code and proofs used in this research project are FOSS, and can be
+found on the Ceramist repo: [[https://github.com/verse-lab/ceramist]]
+
+** What is a Bloom filter?
+So what exactly is a Bloom filter? and how exactly does it achieve
+these important properties?
+
+Well, put simply, a Bloom filter $bf$ is a simply a combination of two
+separate components:
+- A /bit-vector/ of $n$ bits.
+- and a sequence of $k$ /hash functions/.
+To use the Bloom filter as an approximate set, we can perform the
+standard set operations as follows:
+- Insertion :: To insert a value $x$ into a Bloom filter $bf$, simply
+               hash it over each one of the $k$ hash functions, and
+               treating the hash outputs as indices into the
+               bit-vector, raise the corresponding bits.
+
+- Query :: To query for a value $y$ in the Bloom filter, once again
+           hash it over each one of the $k$ hash functions, and then
+           check whether /all/ of the corresponding bits are raised.
+
+These operations, while fairly straightforward, are actually entirely
+sufficient to ensure the *No false negatives* property (see [[https://github.com/certichain/ceramist/blob/fd5e522f2c381f7dbd5b8e38b48041dfd4bd261a/Structures/BloomFilter/BloomFilter_Probability.v#L1166][here]] for Coq statement):
+#+BEGIN_QUOTE
+When an item is inserted into the Bloom filter, it will result in a
+certain subset of the bits in the bit-vector being raised.  As there
+are no operations that can /unset/ these bits, we can be certain that
+any subsequent query for the inserted element /must/ return true.  In
+other words, if we get a negative result for a query, we can be
+certain that the item has never been inserted into the Bloom filter
+before.
+#+END_QUOTE
+This is the case for negative results; things get slightly more
+interesting for *positive* results due to the possibility of *false
+positives*.
+
+To see how this may occur, consider the following scenario:
+- Suppose we insert a value $x$ into a Bloom filter $bf$:
+@@html:<div class="body small-medium-image body"> @@
+# \begin{tikzfigure}
+#       \begin{tikzpicture}[every path/.style={line width=1.75mm, >=stealth}]
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (0.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (0.0, 0.0)$);
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$);
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$);
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#         \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#         \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$)
+#         ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$)
+#         ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$)
+#         ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#         \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#         \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#         \node (x) at (0.0, 4.0) {\fontsize{38}{38}\selectfont x};
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (2.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (4.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (6.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (8.0, 0.0)$);
+#         \draw[->] ($(-4.0, -1.25) + (0.0, 0.0)$) to[in=80, out=200] ($(-7.0, 1.25) + (0.0, -6.0) + (0.0, 0.0)$) ;
+#         \draw[->] ($(-4.0, -1.25) + (2.0, 0.0)$) to[in=140, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (12.0, 0.0)$) ;
+#         \draw[->] ($(-4.0, -1.25) + (4.0, 0.0)$) to[in=90, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (14.0, 0.0)$);
+#         \draw[->] ($(-4.0, -1.25) + (6.0, 0.0)$) to[in=80, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (4.0, 0.0)$);
+#         \draw[->] ($(-4.0, -1.25) + (8.0, 0.0)$) to[in=80, out=-30] ($(-7.0, 1.25) + (0.0, -6.0) + (14.0, 0.0)$);
+#         \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_1$};
+#         \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_2$};
+#         \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_3$};
+#         \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_4$};
+#         \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_5$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_1$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_2$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_3$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_4$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_5$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_6$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_7$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_8$};
+#       \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-1.png]]
+@@html:</div> @@ 
+- Inserting this value will thus result in a subset of the bits in the
+  bit-vector being raised.
+- At a later point, we may choose to query the Bloom filter for a
+  different value $y$.
+- Depending on the choice of hash functions, there is a possibility
+  that the corresponding set of bits that $y$ maps to will be a subset
+  of those that are already raised.
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#       \begin{tikzpicture}[every path/.style={line width=1.75mm, >=stealth}]
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (0.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (0.0, 0.0)$);
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$);
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$);
+#        \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#         \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#         \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$)
+#         ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$)
+#         ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$)
+#         ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#         \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#         \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$)
+#         ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#         \node (x) at (0.0, 4.0) {\fontsize{38}{38}\selectfont y?};
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (2.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (4.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (6.0, 0.0)$);
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (8.0, 0.0)$);
+#         \draw[->] ($(-4.0, -1.25) + (0.0, 0.0)$) to[in=80, out=200] ($(-7.0, 1.25) + (0.0, -6.0) + (0.0, 0.0)$) ;
+#         \draw[->] ($(-4.0, -1.25) + (2.0, 0.0)$) to[in=120, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (12.0, 0.0)$) ;
+#         \draw[->] ($(-4.0, -1.25) + (4.0, 0.0)$) to[in=90, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (12.0, 0.0)$);
+#         \draw[->] ($(-4.0, -1.25) + (6.0, 0.0)$) to[in=60, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (0.0, 0.0)$);
+#         \draw[->] ($(-4.0, -1.25) + (8.0, 0.0)$) to[in=90, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (12.0, 0.0)$);
+#         \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_1$};
+#         \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_2$};
+#         \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_3$};
+#         \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_4$};
+#         \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{30}{38}\selectfont $h_5$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_1$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_2$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_3$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_4$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_5$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_6$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_7$};
+#         \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{30}{38}\selectfont $b_8$};
+#       \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-2.png]]
+@@html:</div> @@
+- In this case, our query would return a /positive/ result even though
+  $y$ is not actually in the Bloom filter.
+
+Ideally, we'd like to characterise the /frequency/ at which these
+kinds of results may occur, however this will generally be highly
+dependent on the particular choice of hash functions, limiting the
+scope of our analysis.
+
+As is the standard approach for these kinds of data structures, in
+order to get a more general result, we can instead treat the hash
+functions and their outputs as random (more on this later).
+
+With this modelling assumption, the property of interest now becomes the 
+*False positive probability* - that is:
+
+- False positive probability :: After inserting $n$ elements into an
+     empty Bloom filter $bf$, the probability that querying for an
+     unseen value $y$ returns a positive result.
+
+As part of the analysis accompanying the original description of the
+Bloom filter (by Burton Howard Bloom in 1970), Bloom provides a
+derivation for the false positive rate.
+
+** Bloom's Analysis
+*Note: The analysis used by Bloom in his original paper actually uses a slightly different definition of a Bloomfilter than the one that is typically used (Bloom assumes that the hash functions are distinct, which is typically hard to achieve in practice) - I present the following as being "Bloom's" analysis to follow the narrative, but in fact this proof is based on the Knuth's variant of the Bloomfilter, so
+Bloom is not the one who originally introduced the error*.
+
+Bloom proposes we begin the analysis by focusing on the behaviours of
+an arbitrary single bit of the bit-vector, and then generalise the
+result at the end - for the purposes of illustration, suppose that
+this bit is $b_1$.
+
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#    \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#      \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#      \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$) ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$) ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$) ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#      \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#      \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#      \node (x) at (0.0, 4.0) {\fontsize{28}{28}\selectfont $x_1$};
+#      \node (dots) at (2.0, 4.0) {\fontsize{18}{28}\selectfont $\dots$};
+#      \node (xn) at (4.0, 4.0) {\fontsize{28}{28}\selectfont $x_n$};
+#      \draw[->, line width=1mm,draw=orange] ($(-7.0, 1.25) + (0.0, -10.0) + (0.0, 0.0)$) -- ($(-7.0, 1.25) + (0.0, -8.0) + (0.0, 0.0)$);
+#      \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_1$};
+#      \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_2$};
+#      \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_3$};
+#      \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#      \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_k$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_1$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_2$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_3$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_4$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_5$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_6$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#      \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_m$};
+#    \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-3.png]]
+@@html:</div> @@
+
+Now, let's have a look at what happens when we hash an input over
+/one/ of the hash functions in the Bloom filter.
+
+@@html:<div class="small-image body"> @@
+# \begin{tikzfigure}
+#    \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#         \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#         \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$) ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$) ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$) ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#         \node (x) at (0.0, 4.0) {\fontsize{28}{28}\selectfont $x_1$};
+#         \node (dots) at (2.0, 4.0) {\fontsize{18}{28}\selectfont $\dots$};
+#         \node (xn) at (4.0, 4.0) {\fontsize{28}{28}\selectfont $x_n$};
+#         \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#         \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_1$};
+#         \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_2$};
+#         \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_3$};
+#         \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#         \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_k$};
+#    \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-4.png]]
+@@html:</div> @@
+
+As we're treating the hash functions as random, the hash outputs can
+be thought of as being uniformly randomly distributed over each
+possible bit. 
+
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#     \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#       \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#       \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$) ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$) ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$) ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#       \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#       \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \node (x) at (0.0, 4.0) {\fontsize{28}{28}\selectfont $x_1$};
+#       \node (dots) at (2.0, 4.0) {\fontsize{18}{28}\selectfont $\dots$};
+#       \node (xn) at (4.0, 4.0) {\fontsize{28}{28}\selectfont $x_n$};
+#       \draw[->, line width=1mm,draw=orange] ($(-7.0, 1.25) + (0.0, -10.0) + (0.0, 0.0)$) -- ($(-7.0, 1.25) + (0.0, -8.0) + (0.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (0.0, 0.0)$) to[in=80, out=200] ($(-7.0, 1.25) + (0.0, -6.0) + (0.0, 0.0)$);
+#       \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_1$};
+#       \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_2$};
+#       \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_3$};
+#       \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_k$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_1$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_2$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_3$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_4$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_5$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_6$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_m$};
+#     \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-5.png]]
+@@html:</div> @@
+
+As such, the probability that the hash function happens to hit our
+selected bit will simply be - 1 over the number of bits - $\frac{1}{m}$.
+Obviously, this naturally also means the probability that the hash output
+misses our selected bit will just be $1 - \frac{1}{m}$.
+
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#     \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$);
+#       \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#       \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$) ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$) ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$) ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#       \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#       \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \node (x) at (0.0, 4.0) {\fontsize{28}{28}\selectfont $x_1$};
+#       \node (dots) at (2.0, 4.0) {\fontsize{18}{28}\selectfont $\dots$};
+#       \node (xn) at (4.0, 4.0) {\fontsize{28}{28}\selectfont $x_n$};
+#       \draw[->, line width=1mm,draw=orange] ($(-7.0, 1.25) + (0.0, -10.0) + (0.0, 0.0)$) -- ($(-7.0, 1.25) + (0.0, -8.0) + (0.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (0.0, 0.0)$) to[in=130, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (6.0, 0.0)$);
+#       \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_1$};
+#       \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_2$};
+#       \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_3$};
+#       \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_k$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_1$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_2$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_3$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_4$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_5$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_6$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_m$};
+#     \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-6.png]]
+@@html:</div> @@
+
+From here, as all the hash functions are also independent, this means
+that the probability that our selected bit remains unset, even after
+executing all the $k$ hash functions, will be $\left(1 - \frac{1}{m}\right)^k$.
+
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#     \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#       \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$) ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$) ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$) ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#       \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#       \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \node (x) at (0.0, 4.0) {\fontsize{28}{28}\selectfont $x_1$};
+#       \node (dots) at (2.0, 4.0) {\fontsize{18}{28}\selectfont $\dots$};
+#       \node (xn) at (4.0, 4.0) {\fontsize{28}{28}\selectfont $x_n$};
+#       \draw[->, line width=1mm,draw=orange] ($(-7.0, 1.25) + (0.0, -10.0) + (0.0, 0.0)$) -- ($(-7.0, 1.25) + (0.0, -8.0) + (0.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (2.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (4.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (6.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (8.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (0.0, 0.0)$) to[in=130, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (6.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (2.0, 0.0)$) to[in=140, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (12.0, 0.0)$) ;
+#       \draw[->] ($(-4.0, -1.25) + (4.0, 0.0)$) to[in=90, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (6.0, 0.0)$) to[in=80, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (4.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (8.0, 0.0)$) to[in=80, out=-30] ($(-7.0, 1.25) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_1$};
+#       \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_2$};
+#       \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_3$};
+#       \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_k$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_1$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_2$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_3$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_4$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_5$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_6$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_m$};
+#     \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-7.png]]
+@@html:</div> @@
+
+In fact, provided that the list of elements to be inserted is unique,
+this independence argument actually generalises over all the hash
+invocations, and thus we can conclude that the probability that our
+selected bit is not raised during the execution will be $\left(1 -
+\frac{1}{m}\right)^{kn}$.
+
+Inverting this expression, we derive that the probability that an
+arbitrary bit in the bit-vector is raised after inserting $n$ elements
+will simply be $1 - \left(1 - \frac{1}{m}\right)^{kn}$.
+
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#     \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (0.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (0.0, 0.0)$);
+#       \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#       \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \draw[->, line width=1mm,draw=orange] ($(-7.0, 1.25) + (0.0, -10.0) + (0.0, 0.0)$) -- ($(-7.0, 1.25) + (0.0, -8.0) + (0.0, 0.0)$);
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_1$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_2$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_3$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_4$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_5$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_6$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_m$};
+#     \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-8.png]]
+@@html:</div> @@
+
+So far this derivation is entirely correct - this expression we have
+proven is actually correct (see [[https://github.com/certichain/ceramist/blob/fd5e522f2c381f7dbd5b8e38b48041dfd4bd261a/Structures/BloomFilter/BloomFilter_Probability.v#L70][here]] for a corresponding Coq proof),
+but it only applies for a /single/ bit not a false positive result.
+
+In order to generalise this result, Bloom then reasons that we can
+interpret the occurrence of a false-positive result as being
+equivalent to each of the $k$ bits selected by the hash functions
+being raised.
+
+@@html:<div class="small-medium-image body"> @@
+# \begin{tikzfigure}
+#     \begin{tikzpicture}[scale=0.45,every path/.style={line width=0.75mm, >=stealth}]
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (0.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (0.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$);
+#       \draw[fill=orange!50,draw=none] ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$) rectangle ($(-6.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \draw[fill=orange!20] ($(5.0, 1.0)$)  rectangle ($(-5.0, -1.0)$);
+#       \draw ($(-5.0, 1.0) + (2.0, 0.0)$) -- ($(-5.0, -1.0) + (2.0, 0.0)$) ($(-5.0, 1.0) + (4.0, 0.0)$) -- ($(-5.0, -1.0) + (4.0, 0.0)$) ($(-5.0, 1.0) + (6.0, 0.0)$) -- ($(-5.0, -1.0) + (6.0, 0.0)$) ($(-5.0, 1.0) + (8.0, 0.0)$) -- ($(-5.0, -1.0) + (8.0, 0.0)$);
+#       \draw ($(8.0, 1.0) + (0.0, -6.0)$)  rectangle ($(-8.0, -1.0) + (0.0, -6.0)$);
+#       \draw ($(-8.0, 1.0) + (0.0, -6.0) + (2.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (2.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (4.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (4.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (6.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (6.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (8.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (8.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (10.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (10.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (12.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (12.0, 0.0)$) ($(-8.0, 1.0) + (0.0, -6.0) + (14.0, 0.0)$) -- ($(-8.0, -1.0) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \node (x) at (0.0, 4.0) {\fontsize{28}{28}\selectfont $x$};
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (0.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (2.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (4.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (6.0, 0.0)$);
+#       \draw[->] ($(x) + (0.0, -1.0)$) -- ($(-4.0, 1.25) + (8.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (0.0, 0.0)$) to[in=80, out=200] ($(-7.0, 1.25) + (0.0, -6.0) + (0.0, 0.0)$) ;
+#       \draw[->] ($(-4.0, -1.25) + (2.0, 0.0)$) to[in=140, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (12.0, 0.0)$) ;
+#       \draw[->] ($(-4.0, -1.25) + (4.0, 0.0)$) to[in=90, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (10.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (6.0, 0.0)$) to[in=80, out=-90] ($(-7.0, 1.25) + (0.0, -6.0) + (4.0, 0.0)$);
+#       \draw[->] ($(-4.0, -1.25) + (8.0, 0.0)$) to[in=80, out=-30] ($(-7.0, 1.25) + (0.0, -6.0) + (14.0, 0.0)$);
+#       \node at ($(-4.0, 0.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_1$};
+#       \node at ($(-4.0, 0.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_2$};
+#       \node at ($(-4.0, 0.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_3$};
+#       \node at ($(-4.0, 0.0) + (6.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-4.0, 0.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $h_k$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (0.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_1$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (2.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_2$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (4.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_3$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (6.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_4$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (8.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_5$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (10.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_6$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (12.0, 0.0)$) {\fontsize{12}{38}\selectfont $\dots$};
+#       \node at ($(-7.0, 0.0) + (0.0, -6.0) + (14.0, 0.0)$) {\fontsize{20}{38}\selectfont $b_m$};
+#     \end{tikzpicture}
+# \end{tikzfigure}
+[[file:../images/bloomfilters-picture-9.png]]
+@@html:</div> @@
+
+Thus, in the case that the bits are independent, the probability that
+this will occur is simply $\left(1 - \left(1
+-\frac{1}{m}\right)^{kn}\right)^{k}$, thereby concluding the proof.
+
+*Makes sense? Seems correct? Well...*
+
+@@html:<div class="center-text body">@@
+*/The/ claim /that the bits are/ independent /is not/ valid!*
+@@html:</div>@@
+
+Crucially, this final step only works if the bits selected by the hash
+function end up all being distinct, which is not always guaranteed
+(/even though the hash functions are assumed to be independent/) - for
+a simple counterexample, consider the case in which all the hash
+functions happen to map the same bit - in this case the probability of
+a false positive (given the hash outcomes) will be $\left(1 - \left(1
+-\frac{1}{m}\right)^{kn}\right)$ and not $\left(1 - \left(1
+-\frac{1}{m}\right)^{kn}\right)^{k}$.
+
+So clearly this is not the correct expression for the false positive
+of a bloom filter. *So what is?*
+
+** True false positive rate.
+
+In fact, 30 years after Bloom's original publication[fn:6] (1970), this
+error was noticed by subsequent researchers Bose et al. in a 2008
+paper (see [[https://cglab.ca/~morin/publications/ds/bloom-submitted.pdf][here]]). 
+#
+In order to correct this issue, Bose et al. propose an alternative
+derivation which uses a balls-into-bins analogy to account for the
+possibility that the hash outputs overlap, and derive the false
+positive rate as being (see [[https://github.com/certichain/ceramist/blob/fd5e522f2c381f7dbd5b8e38b48041dfd4bd261a/Structures/BloomFilter/BloomFilter_Probability.v#L1187][here]] for the Coq proof):
+
+@@html:<div class="center-math body">@@
+\[
+\frac{1}{m^{k(n + 1)}} \sum_{i = 1}^{m} i^k i! {m \choose i} {\left\{\begin{array}{c} kn \\ i \end{array} \right\}}
+\]
+@@html:</div>@@
+
+Unfortunately, while /we/ now know that this new expression for the
+false positive rate is correct, 2 years after Bose et al.'s
+publication, other researchers actually found errors[fn:2] in their
+derivation, throwing further doubt on its validity.
+
+This finally brings us to our research - Ceramist: Certifying
+Certainty and Uncertainty in Approximate Membership Query Structures,
+in which we manage to finally pin down the true behaviours of a
+Bloom filter by producing a certified proof of Bose et al.'s updated
+bound[fn:3] in Coq.
+
+As we've proven this from first principles, it is highly unlikely any
+further errors will ever be discovered in this derivation, and as such
+we can be fairly certain that this new expression does actually model
+the behaviours of a Bloom filter correctly.
+
+** Interested? Learn more...
+
+This concludes the high-level overview of the context surrounding our
+research and its importance[fn:4].  Hopefully this has piqued your
+interest; there are many components of the work that I have not
+mentioned here for size constraints, such as:
+
+- How can we encode probability in Coq?
+- What is the exact derivation for the updated Bloom filter false positive expression?
+- How can we extend this analysis to other probabilistic data
+  structures, such as:
+  - Counting filters?
+  - Quotient filters?
+  - Blocked Bloom filters?
+
+(As a side product of the insight gained during our mechanisation, we
+even managed to construct a few entirely novel data structures - see
+the paper for more details).
+
+If you are interested, I'd recommend either reading our full paper (see [[https://www.springerprofessional.de/en/certifying-certainty-and-uncertainty-in-approximate-membership-q/18186934][here]]), or
+checking out my presentation of the paper for CAV (see [[https://invidio.us/D80VCsVeCMs?t=4482][here]]).
+
+The code and proofs used in this research project are FOSS, and can be
+found on the Ceramist repo: [[https://github.com/verse-lab/ceramist]]
+
+[fn:1] In reference to the fact that the research is entirely about
+verifying the "certainty" of positive results from a Bloom filter.
+
+[fn:2] To be fair, the error in Bose et al.'s paper was primarily due
+to incorrect definitions rather than an incorrect logical step. As an
+interesting anecdote, the first version of our work was based off the
+incorrect definitions by Bose et al. and ended up being rejected by
+reviewers who then rediscovered this error. In our final version we
+ended up proving Bose et al.'s definitions from first principles,
+thereby eliding that source of errors.
+
+[fn:3] Our proof uses an alternative derivation that fixes the issues
+in Bose et al.'s paper.
+
+[fn:4] To be fair, the asymptotic behaviour of Bloom's original bound
+is consistent with this updated definition, so the impact is more an
+issue of pedantry rather than about practical applications.
+
+[fn:5] I should note that this is a simplified explanation of the
+mechanisms used by browsers when detecting malicious URLs - in
+practice rather than sending the whole URL, the browser will send a
+hash of the URL.  This means that the explicit browsing history of the
+user is not at risk, but it should still be noted that this
+information could still be used to learn information about the user
+(fingerprinting etc.).
+
+[fn:6] There was a comment on Hacker News that accurately pointed out
+that Bloom's definition of a Bloom filter actually makes the
+assumption that the hash functions would each produce $k$ distinct
+bits, which means that the counter-example I propose would not be
+correct.
+
+Despite this, Bloom's proof is still incorrect due to invalid
+independence assumptions.
+
+Using this distinct hash output assumption, the first steps to the
+derivation are mostly the same, except with the probability of a
+single bit being set after $n$ insertions as being $1 - (1 - k/m)^n$,
+which Bloom accurately derives.
+
+However, Bloom then makes the same mistake as presented in the
+article, by reasoning that, as a false positive occurs if $k$ distinct
+bits are raised, the probability of this occurring is $(1 - (1 - k/m)^n)^k$.
+This claim is still wrong even though the hash outputs are guaranteed
+to not overlap ( the "obvious" counterexample presented in the
+article). 
+
+Fundamentally, this is because the values of the bits themselves are
+not independent - knowing that one bit is raised after inserting $n$
+elements, /will/ influence the probabilities of the other bits being
+raised, as the hash outputs are now depedent.
+
+For example, suppose we use $k=2$, and $m=3$. First, observe that as
+Bloom correctly derives, the probability of any single bit being
+raised after an insertion is $\frac{1}{3}$.  Now, if after inserting 1
+element, we learn that bit $b_1$ is raised, then this means that with
+probability $\frac{1}{2}$, either $b_2$ or $b_3$ is raised (from the
+from that hash outputs must be distinct). As such, the bits are not
+independent: $P[ b_2\text{ is raised} | b_1\text{ is raised} ] \neq P[ b_2\text{ is raised}]$
+ ($\frac{1}{2} \neq \frac{1}{3}$).

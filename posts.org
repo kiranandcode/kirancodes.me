@@ -1,0 +1,19 @@
+#+TITLE: Kiran's Blog Posts
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:posts.org][Posts]]
+#+NAV_SECTION: Posts
+
+* Kiran's Blog Posts
+:PROPERTIES:
+:subtitle: My Ramblings on Life, Software, Games and Everything
+:END:
+- [[file:posts/log-writing-activitypub.org][19 Apr, 2023 - How I wrote an Activitypub Server in OCaml: Lessons Learnt, Weekends Lost]]
+- [[file:posts/log-ways-of-sql-in-ocaml.org][23 Mar, 2023 - Petrol: embedding a type-safe SQL API in OCaml using GADTs]]
+- [[file:posts/log-unifying-folds.org][26 Aug, 2022 - Unifying fold left and fold right with Prolog]]
+- [[file:posts/log-racket-and-rhombus-sexp.org][22 Aug, 2022 - Racket->Rhombus: To Sexp or not to Sexp?]]
+- [[file:posts/log-certified-synthesis.org][03 Jul, 2021 - Goodbye C developers: The future of programming with certified program synthesis]]
+- [[file:posts/log-bye-bye-monads-algebraic-effects.org][01 Jan, 2021 - Friendship ended with Monads: Testing out Algebraic effects in OCaml for Animations]]
+- [[file:posts/log-abolish-state.org][21 Aug, 2020 - Abolish the state! or no? An OCaml Perspective]]
+- [[file:posts/log-bloomfilters-debunked.org][23 Jul, 2020 - Bloom filters debunked: Dispelling 30 Years of bad math with Coq!]]
+- [[file:posts/log-emacs-temporary-overlay.org][11 Feb, 2020 - Temporary overlays in Emacs]]
+- [[file:posts/log-ocaml-preprocessing.org][09 Dec, 2019 - Preprocessing in OCaml (using Ppxlib)]]
+- [[file:posts/log-first-post.org][12 Aug, 2019 - First post]]

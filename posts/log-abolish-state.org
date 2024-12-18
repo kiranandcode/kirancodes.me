@@ -1,0 +1,399 @@
+#+TITLE: Abolish the state! or no? An OCaml Perspective
+#+DATE: <2020-08-21 Fri>
+#+WARNING: This post was written before I began my transition. It may adopt a tone that I no longer feel is appropriate and the page may make use of design that is not consistent with the rest of the site.
+* Abolish the state! or no? An OCaml Perspective :ocaml:
+  :PROPERTIES:
+  :EXPORT_DATE: <2020-08-21 Fri>
+  :PUBDATE: <2020-08-21 Fri>
+  :END:
+A rather interesting facet of the OCaml programming language is the
+variety of paradigms that it supports: functional, imperative and
+object-oriented.  While this certainly increases the flexibility of
+the language, it also raises the question of how these various factors
+should be balanced in idiomatic OCaml code.
+
+While I've found that it's fairly established that the "Object" in
+Object Caml should typically be avoided, and there are a quite a few
+articles on how mutable references can be used in a local fashion, the
+issue of how to intermix functional and imperative code at an
+architectural system-design level is something that is less often
+spoken about, and has overall left me confused about how to structure
+OCaml code.
+
+For an example, if you are interfacing with an external API with
+interior mutability:
+#+BEGIN_SRC ocaml
+type t 
+val init: unit -> t
+val update_state: t -> int -> unit
+#+END_SRC
+Do you simply ignore the external state in your data structures?
+#+BEGIN_SRC ocaml
+type s = { state: t; count: int }
+let update (s: s) = update_state s.state s.count; {s with count = s.count + 1;}
+#+END_SRC
+Do you make the entire structure mutable to preserve a consistent interface?
+#+BEGIN_SRC ocaml
+type s = {state: t; mutable count: int}
+let update (s: s) : unit = update_state s.state s.count; s.count <- s.count + 1
+#+END_SRC
+Do you write your code in pure form parameterised over the mutable
+components, possibly at the cost of additional mutable accesses?
+#+BEGIN_SRC ocaml
+type 'a s = {state: 'a; count: int}
+let update (s: 'a s) f = {count = s.count + 1; state = f s.state s.count}
+#+END_SRC
+Do you instead pull out the mutable components from the data-structure entirely requiring them as external inputs?
+#+BEGIN_SRC ocaml
+type s = {count: int}
+let update (s: s) state = update state s.count; {count = s.count + 1}
+#+END_SRC
+
+I asked this on the OCaml disuss forum, however didn't get any useful
+response.
+
+This is an issue that I have often encountered in my personal
+projects, where, coming from a Haskell background, I typically design
+my systems to be entirely pure, often at great cost to performance.
+
+For example, I recently built a project where most of the computation
+was done while wrapped in a computation monad: 
+#+BEGIN_SRC ocaml
+  type ('a, 'b) t = string list -> ('a * string list, 'b) Result.t
+
+  let ( >>= ) (comp: ('a, 'e) t) (f:('a -> ('b, 'e) t)) : ('b, 'e) t =
+    fun s -> 
+    Result.(>>=) (comp s) (fun (value,warnings) ->
+        Result.map ((f value) warnings) ~f:(fun (result, warnings) ->
+            (result, warnings)))
+#+END_SRC
+
+The idea here was that I wanted to allow components of my codebase to
+produce error messages that could be accumulated and printed to the
+user or to a log - to do this, I was explicitly threading this list of
+error messages through each computation. As the program grew more and
+more complex, I ended up adding more and more control-flow mechanisms
+to the monad - things like try-catch or a supress-error, and
+eventually it seemed like I'd essentially just recreated OCaml's
+control flow just within my monad.  Even worse, as certain parts of
+the system called out to external components with mutable state, many
+of the intermediate functions did not adhere to referential
+transparency.
+
+Overall, after completing this project, I had to question whether this
+use of a monad was really an idiomatic use of OCaml - my code is less
+efficient than just using mutable references, and provides roughly the
+same or fewer guarantees.
+
+As such, to investigate this problem, I have scoured through the
+source code of a variety of real world open-source OCaml programs,
+looking at their general structure to evaluate how they choose to
+balance these two paradigms in their system design.
+
+In rest of this post, I'll present the findings of my research into
+this question, providing at a series of case studies on real world
+OCaml projects evaluating with how these imperative concepts should be
+used at an architectural level.
+
+** Case study 1: OCaml-DNS
+- Project Link: https://github.com/mirage/ocaml-dns
+
+The OCaml DNS project provides an implementation of a DNS resolver in
+OCaml. The README states that the project is written in a mostly pure
+fragment of OCaml.  The structure of the project establishes a clear
+boundary between the pure and the impure components of the library,
+and most of the imperative code in the executables that it provides is
+localised around the entry point. 
+
+The core of the implementation revolves around a custom data-structure
+~DNS_trie~ to encode zone file data.  The recursive data-structure is
+composed of two immutable maps, the first maps domain-components to
+its subdomains (which are also encoded as a ~DNS_trie~) and the second
+maps resource record types to their values.  
+
+Alongside these pure logic implementations, in order to encode IO
+operations, the OCaml-DNS builds additional APIs that are
+parameterised over an arbitrary IO monad - for example, to instantiate
+the API, you would have to provide a module that included, amongst
+other things, the following operations:
+#+BEGIN_SRC ocaml
+type +'a io
+val bind : 'a io -> ('a -> 'b io) -> 'b io
+val lift : 'a -> 'a io
+#+END_SRC
+In this way, the library is able to achieve a similar "parametericity"
+to Haskell code using monad/monad transformer type-classes.
+
+Finally, the executable instantiate these modules using various impure
+forms of IO (~Lwt~, ~Unix~ etc.) and call them from the entry point.
+
+Overall this type of structure seems best suited for command-line like
+applications, which are intended to have short runtimes, and not to be
+long-running.
+
+** Case study 2: Wanderers
+- Project Link: https://github.com/a-nikolaev/wanderers
+
+Wanderers is an implementation of a small rougelike game in OCaml
+interfacing with the SDL library for rendering and input management.
+
+In the entry point of the application, Wanderers starts by
+imperatively setting up the OpenGL Context, and then uses the input
+parameters to generate an initial state. This initial state is then
+passed as a parameter to the recursive main loop function (the main
+other parameter that is threaded through the main function is the
+ticks).
+
+Each iteration of the main loop consists of the following steps:
+- (imperative) Retrieve current ticks from SDL library 
+- (functional/imperative) Draw game screen from state
+  - imperative aspect arises because drawing is done using SDL calls which maintain an implicit context
+- (functional) Simulate changes game state using the elapsed ticks
+- (functional/imperative) Update game state using key presses from user
+  - imperative aspect arises because keypresses are obtained from SDL calls which maintain an implicit context
+
+While the main loop does interface heavily with the imperative SDL
+API, the core logic of the game (the simulation part), is done
+entirely functionally, with the simulation operation iteratively
+updating parts of the global state.
+
+The entirety of the game state is encapsulated within this state
+parameter, and modifications seem to be made in a functional way.
+
+Unlike OCaml-DNS, this project has a less strict boundary between its
+imperative and functional components, allowing intermixing of these
+styles at the main loop. However, while at a high level the components
+may be either imperative or functional, within a component, the chosen
+style is used consistently.
+
+** Case study 3: Unison
+   :LOGBOOK:
+   - Note taken on [2020-08-20 Thu 07:40] \\
+     Unison makes a rather clever use of Dune specification language to
+     allow specifying modules for its library without having to list all the files:
+     #+BEGIN_SRC dune
+     (modules :standard / excluded)
+     #+END_SRC
+   :END:
+Unison is a file-synchronization program written in OCaml that allows
+synchronizing file directories between hosts.
+
+Unison is quite a large project, so we'll focus on a subset of its
+modules, but try and generalize the patterns that it uses.
+
+The entrypoint to Unision is in its main module, which is written as a
+functor parameterised over the rendering method, which allows the
+program to be built conditionally without linking libraries required
+for options that are not used.
+
+It parses the user arguments and calls out to imperative functions
+from various submodules (such as prefs) to update the preferences
+based on input flags, before running the main program via the
+instantiated module.
+
+*** Sub case study 1: Preferences module
+ The preferences module provides a good representation of the general mix of imperative and functional code used in Unison.
+
+ The Preferences module itself is used to group together all the user
+ preferences under a single conceptual profile thing.
+
+ It makes liberal use of references, but encapuslates all accesses to
+ the mutable references behind it's module interface.
+
+ As an example of this design, consider the following private
+ declaration within the module:
+ #+BEGIN_SRC ocaml
+ let addresetter f = resetters := f :: !resetters
+ #+END_SRC
+ Each set of user settings adds a callback to this list, which is then
+ invoked when the external API calls to reset settings to defaults.
+
+ It makes some even more crazy use of refernce to handle inter-process
+ communication - for example, in order to synchronize user settings
+ across a server and client, two lists of callbacks are setup - one for
+ marhalling stored values and one for loading values.
+
+ This use of reference allows for additional dynamism within the
+ program logic - essentially, the prefs module sets up a set of dynamic
+ callback handlers by means of maintaining a mutable map.  While the
+ end-user doesn't actually add callbacks, while defining the module,
+ the developer can use this mutable map to easily add callback
+ handlers. 
+
+ Preferences themselves are represented internally as an element of the following type:
+ #+BEGIN_SRC  ocaml
+ type 'a t =
+   { mutable value : 'a; defaultValue : 'a; mutable names : string list;
+     mutable setInProfile : bool }
+ #+END_SRC
+ So, in the external API, a property like `should_download` would have
+ the type `bool t`.  However, the external users can only access these
+ components by means of (mostly) immutable accessors.
+
+ There are also unit returning functions that append to a file.
+
+Finally the preference creating operations are then exported and used
+throughout the program. Despite this distributed usage, as the
+functions all mutate the state encapsulated within the module itself,
+when it comes to printing out the flags/customization options of the
+program, this can be done by mutating a single source.
+
+*** Sub case study 2: Xferhint
+This module manages comonents of Unison dealing with xfer - an
+optimization of the file synchronization algorithm to not copy over
+files when it seems that the two files are present on both systems -
+identified by a hash colission.
+
+To implement this functionality, the module instantiates a mutable
+table mapping file paths to hashes. The module then exports methods
+such as ~delete~, ~lookup~ and ~insert~ that manipulate the store.
+
+Again as in the preferences module, the functions themselves do not
+satisfy referential transparency, but all the unsafe manipulations to
+the state are encapsulated within the boundaries of the module.
+
+*** Sub case study 3: Tree 
+This module provides an implementation of a custom labelled tree,
+where the edges and leaves can be annotated with potentially different
+types of values.
+
+In contrast to the other modules, the implementation of this module is
+entirely functional, with all operations treating the datastructure as
+immutable.
+
+*** Sub case study 4: Recon
+This module implemnts the algorithm used to determine the changes
+required to reconcile the program, and is primarly implemented in an
+imperative way, but calls out to the functional Tree datastructure and
+its operations.
+
+Like the other imperative modules in Unison, Recon imperatively calls
+out to the Preferences module to register its customization
+options. Unlike the other imperative modules we've looked at so far,
+apart from the mutable options, most of the exported API from this
+module is actually referentially transparent.
+
+*** General patterns
+The general approach to handling state in unison seems to be to
+encapsulate mutations to the state within the module boundaries - all
+functions in a given module can be easily understood as they only
+mutate values within the module. The only exception to this is the
+pervasive use of the preferences module to register customizations in
+a single source.
+
+While this discipline provides some rigour to the development
+processs, as imperative functions inevitably end up calling other
+imperative functions, reasoning about how a given function changes the
+state becomes increasingly dificult, as one needs to follow longer and
+longer function call chains (not to mention callbacks etc.).
+
+One potential way of achieving the best of both worlds would be to use
+first-class modules to pass around the context explicitly - i.e:
+#+BEGIN_SRC ocaml
+module type S = sig end
+module type SM = sig val incr: unit -> int end
+module M () = struct let count = ref 0 end
+module type Make(S: S) = struct let incr () = S.count := 1; S.count end
+#+END_SRC
+In other words, a function making use of any mutable operations
+(~incr~ in this case), would need to be passed in explicitly a module
+of module type ~S~, which would then be instatiated to "unlock" the
+mutable operation.
+
+In contrast to Union's design, this would make functions explicitly
+indicate the state that they interact with, making reasoning about
+these programs easier.
+** Case study 4: Ocsigenserver
+ Oscigenserver is a OCaml http server and client implemented in OCaml.
+
+ Again as with Unison, as this is a large project, we'll look at a
+ subset of the modules to get an understanding of how Oscigen
+ intergrates functional and imperative operations.
+*** Sub case study 1: Oscigen Server
+ The server starts by imperatively initializing its subcomponents (i.e
+ like seeding its random generator, etc.) - these imperative operations
+ are all encapsulated at the outermost level of the system in a module
+ ~Ocsigen_server~ which provides the entrypoint, however are all declared
+ at the toplevel:
+ #+BEGIN_SRC ocaml
+ let () = Random.self_init ()
+
+ let () = Ocsigen_commandline.cmdline
+ #+END_SRC
+ Most of the other code in the system is written in a functional way,
+ with explicit state being passed.
+*** Sub case study 2: Oscigen command
+ This module uses imperative state to allow dynamically registering a
+ series of handlers for a given prefix.  The idea here is that an
+ external client can register a command and a handler callback using a
+ specific ~register : ('a -> 'b) -> unit~ function. In order to use
+ these handlers to run a command, the user must retrieve the run
+ operation using an explicit getter ~get_run: unit -> ('a -> 'b)~.
+
+ The use of imperative components is slightly more principled than in
+ Unison, as no mutable references are declared at the top level, and so
+ any functions that have mutable behaviours are somewhat captured in
+ the type system, due to the fact that the getter function has to be
+ retrieved before use.
+*** Sub case study 3: Http client
+ Ocsigen also provides a module that implements a http client that can
+ make requests for a given url.
+
+ While the action of requesting data from an external server is
+ inherently an IO operation, due to the use of LWT and its monads, this
+ fact is clearly indicated in the type signatures.  Besides this, most
+ of the implementation of the core logic is done in a functional style,
+ with the only imperative parts being rather benign irrelevant calls
+ out to a logging utilty.
+
+ There are some imperative components in terms of a mutable table
+ system for handling pipelined HTTP connections, but this imperative
+ state is not exposed in any way to the clients of the API (note:
+ unlike in Unison, the use of state even more principled as there are
+ no ways for the user to directly mutate the table), nor does it have
+ significant impacts on the functional behaviours of the exported
+ code - i.e to the end client, the api is simply submit a URL and
+ retrieve a response, but internally the pipelining table may be used
+ to optimize this.
+*** General patterns
+Overall, despite being a long running application, Oscigen server
+makes a very principled use of imperative state in its system design.
+
+Most of the imperative parts of the codebase are either for
+initialization (i.e initializing the random number generator at the
+start of a module) or optimization (i.e memoizing results for a
+complex calculation). While this isn't technically referential
+transparency, as these side-effects have no impact on the semantics of
+a given API, reasoning about the behaviours of a given program is
+still fairly straightforward.
+
+The only exception to this rule is the command module, wherin the
+ability to mutate references is allowed in order to allow dynamically
+extending the handlers for a message. Despite the use of mutable
+state, Oscigen still makes the dynamic behaviour of the API explicit
+in the interface by not exporting the handler directly, but rather a
+getter that returns the function.
+
+** Conclusion: Abolish the state? Yes or no?
+As presented in the case studies, OCaml simultaneously supports a wide
+variety of programming styles, ranging from the entirely pure to the
+entirely impure.
+
+Easy access to state is a useful feature of the OCaml language, and
+allows for an easier development process - however, making
+unprincipled use of state can make programs harder to reason about.
+
+In general, we can ensure our use of state is principled by making
+sure that most mutation is done at the edges of the codebase, and then
+writing the rest of our code in a pure form.  This pattern works well
+with use of mutable structures (such as hashtables etc.), wherein we
+can make all the mutations to the datastructure at the entrypoint, and
+then use an pure interface when accessing it from the functional core.
+
+Other forms of dynamic behaviours such as maintaining state within the
+module structure itself are more nefarious, as they mean that the
+behaviours of a module are not consistent over time, which quickly
+propagates and makes reasoning about the behaviours of other functions
+difficult.
+
+So, abolish the state? ehhh. no.
