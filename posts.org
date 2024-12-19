@@ -6,6 +6,7 @@
 :PROPERTIES:
 :subtitle: My Ramblings on Life, Software, Games and Everything
 :END:
+- [[file:posts/log-building-websites-for-dummies.org][19 Dec, 2024 - [DRAFT] Building static websites for dummies]]
 - [[file:posts/log-writing-activitypub.org][19 Apr, 2023 - How I wrote an Activitypub Server in OCaml: Lessons Learnt, Weekends Lost]]
 - [[file:posts/log-ways-of-sql-in-ocaml.org][23 Mar, 2023 - Petrol: embedding a type-safe SQL API in OCaml using GADTs]]
 - [[file:posts/log-unifying-folds.org][26 Aug, 2022 - Unifying fold left and fold right with Prolog]]

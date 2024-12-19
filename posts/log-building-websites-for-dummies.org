@@ -1,0 +1,3 @@
+#+TITLE: [DRAFT] Building static websites for dummies
+#+DATE: <2024-12-19 Thu>
+#+WARNING: This post is in a draft state

@@ -5,6 +5,7 @@
 (require 'dash)
 (require 'htmlize)
 ;; (load-theme 'lab-light)
+(require 'modus-themes)
 (load-theme 'modus-operandi)
 
 
@@ -96,6 +97,14 @@
   (save-window-excursion
     (switch-to-buffer "init-orgpublish-latest.el")
     (eval-buffer)
+    (org-publish "kirancodes.me"))
+)
+
+(defun build-project-all ()
+  (interactive)
+  (save-window-excursion
+    (switch-to-buffer "init-orgpublish-latest.el")
+    (eval-buffer)
     (org-publish "kirancodes.me" t))
 )
 
@@ -106,9 +115,11 @@
 
 (defun html-dir (&rest segments)
   (apply #'concat
-         (file-name-as-directory org-directory)
-         "html-new/"
-         (mapcar #'file-name-as-directory segments)))
+         ;;       (file-name-as-directory org-directory)
+         ;;       "html-new/"
+         (file-name-directory (buffer-file-name))
+         (mapcar #'file-name-as-directory segments))
+  )
 
 (defvar build-dir
   (expand-file-name "~/Documents/kirancodes.me/")

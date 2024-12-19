@@ -1,10 +1,22 @@
-.PHONY: all publish clean
+.PHONY: all publish publish-all all clean
 
 EMACS = ~/.scripts/emacs-29.4/src/emacs
-all: publish
+all: publish-all
 
 publish: site-config.el
-	$(EMACS)  --batch --load ~/.emacs.d/init.el  --load ./site-config.el --funcall build-project
+	WEBSITE_MODE=t \
+          $(EMACS) -nw \
+            --load ./site-config.el \
+            --funcall build-project \
+            --funcall kill-emacs
 
+
+publish-all: site-config.el
+	rm -rf ~/.org-timestamps
+	WEBSITE_MODE=t \
+          $(EMACS) -nw \
+            --load ./site-config.el \
+            --funcall build-project-all \
+            --funcall kill-emacs
 
 
