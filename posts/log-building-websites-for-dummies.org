@@ -1,3 +1,16 @@
 #+TITLE: [DRAFT] Building static websites for dummies
 #+DATE: <2024-12-19 Thu>
 #+WARNING: This post is in a draft state
+* Building Static Websites for Dummies~ :html:webdev:
+This is a little quick guide to as I understand it, a good starting
+point of hints and tips and tricks for writing static webpages.
+
+I am not a web-developer by trade, so I don't really keep up on the
+latest developments in webdev that much, but recently I've been trying
+to build a site, and in the process of looking up the best way to
+prototype, I realised there were a lot of nifty tools and techniques
+that I had been overlooking.
+
+
+
+
