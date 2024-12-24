@@ -6,7 +6,62 @@
 (require 'htmlize)
 ;; (load-theme 'lab-light)
 (require 'modus-themes)
-(load-theme 'modus-operandi)
+(load-theme 'modus-operandi t)
+
+;;;; Quick Build keybind
+
+(defun replace-killed-buffer-in-file (filename)
+  "Replace all instances of #<killed buffer> with '\"killed buffer\"' in the given FILENAME and save the file."
+  (interactive "fEnter filename: ")
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (goto-char (point-min))
+    (while (search-forward "#<killed buffer>" nil t)
+      (replace-match "\"killed buffer\""))
+    (write-region (point-min) (point-max) filename)))
+
+
+(defun build-project ()
+  (interactive)
+  (save-window-excursion
+    (let ((current-themes custom-enabled-themes)
+          (cache-file
+           (concat
+	    (expand-file-name org-publish-timestamp-directory)
+	    "pages" ".cache")))
+      (loop for theme in current-themes do
+            (disable-theme theme))
+      (when (file-exists-p cache-file)
+        (delete-file cache-file))
+      (enable-theme 'modus-operandi)
+      (save-buffer)
+      (org-publish-file (buffer-file-name (buffer-base-buffer)) nil t)
+      (disable-theme 'modus-operandi)
+      (loop for theme in current-themes do
+            (enable-theme theme))
+      )))
+
+(defun build-project-all ()
+  (interactive)
+  (save-window-excursion
+    (let ((current-themes custom-enabled-themes)
+          (cache-file
+           (concat
+	    (expand-file-name org-publish-timestamp-directory)
+	    "pages" ".cache")))
+      (loop for theme in current-themes do
+            (disable-theme theme))
+      (when (file-exists-p cache-file)
+        (delete-file cache-file))
+      (enable-theme 'modus-operandi)
+      (org-publish "kirancodes.me" t)
+      (disable-theme 'modus-operandi)
+      (loop for theme in current-themes do
+            (enable-theme theme))
+      )))
+
+(bind-key (kbd "C-c C-c") #'build-project)
+(bind-key (kbd "C-c C-c") #'build-project 'org-mode-map)
 
 
 ;;;; Better Useful ids
@@ -90,34 +145,15 @@
           (inc-suffixf ref)))
       ref)))
 
-;;;; Quick Build keybind
-
-(defun build-project ()
-  (interactive)
-  (save-window-excursion
-    (switch-to-buffer "init-orgpublish-latest.el")
-    (eval-buffer)
-    (org-publish "kirancodes.me"))
-)
-
-(defun build-project-all ()
-  (interactive)
-  (save-window-excursion
-    (switch-to-buffer "init-orgpublish-latest.el")
-    (eval-buffer)
-    (org-publish "kirancodes.me" t))
-)
-
-(bind-key (kbd "C-c C-c") #'build-project)
-(bind-key (kbd "C-c C-c") #'build-project 'org-mode-map)
-
 ;;;; Variables
 
 (defun html-dir (&rest segments)
   (apply #'concat
          ;;       (file-name-as-directory org-directory)
          ;;       "html-new/"
-         (file-name-directory (buffer-file-name))
+         (if (buffer-file-name)
+             (file-name-directory (buffer-file-name))
+           (expand-file-name "./"))
          (mapcar #'file-name-as-directory segments))
   )
 
@@ -1110,7 +1146,8 @@ holding export options."
    ;; Closing document.
    "</body>\n</html>"))
 
-
+;; (setq org-publish-cache nil)
+;; (setq org-element-use-cache nil)
 ;;;; Project Alist 
 (setq org-publish-project-alist
       `(("pages"

@@ -1,15 +1,295 @@
-#+TITLE: [DRAFT] Building static websites for dummies
+#+TITLE: Building static websites for dummies
 #+DATE: <2024-12-19 Thu>
-#+WARNING: This post is in a draft state
 * Building Static Websites for Dummies~ :html:webdev:
-This is a little quick guide to as I understand it, a good starting
-point of hints and tips and tricks for writing static webpages.
+Okay, this is a quick post to get back into things! I like to build my
+own websites (see this page hehe), but I'm not a web developer and
+sadly I don't keep up to date on the best practices and tooling for
+doing so. Recently, I decided to redesign this site (you're browsing
+it on the new design, do you like it?~), and in this process
+discovered a bunch of cool things on how to do webdev quickly.
 
-I am not a web-developer by trade, so I don't really keep up on the
-latest developments in webdev that much, but recently I've been trying
-to build a site, and in the process of looking up the best way to
-prototype, I realised there were a lot of nifty tools and techniques
-that I had been overlooking.
+This is a little quick guide to as I understand it, a good starting
+point of hints and tips and tricks for myself and other people for
+writing static webpages quickly.
+
+** Tip 1: Live-server
+My usual go-to for previewing websites locally in the past has been to
+use Python's built-in web server:
+#+begin_src bash
+$ cd project/
+$ python3 -m http.server --cgi 8080
+#+end_src
+This kinda works mostly, but the problem is that when I update the
+HTML for my site, then I need to manually refresh the browser to see
+my changes.
+
+So, now to introduce the trick, the node-js community have this super
+nifty webserver called =live-server= ([[https://github.com/tapio/live-server][link]]). 
+
+It does the same as the python server... but, it installs a script
+into the website and configures it such that whenever the server
+notices that the source files have changed, then your webpage will
+automatically refresh itself.
+
+To install it:
+#+begin_src bash
+$ npm install -g live-server
+#+end_src
+Then, you can just use it as a simple replacement for anywhere you
+would have used the python server:
+#+begin_src bash
+$ cd project/
+$ live-server
+#+end_src
+
+If there's nothing else you get from this blog post, please, please,
+pleaseeeeee, try out this package, it is honestly such an amazing
+life-saver, it allowed me to iterate sooo much faster, I can not
+believe how I ever lived without it!!!
+
+** Tip 2: Eleventy (or 11ty) for static site generation
+Next, writing HTML by hand can be a bit of a pain, so the next thing I
+usually like to do is to set up some kind of means of generating it.
+
+Now, my usual go-to to do this is to use Jekyll, but when I'm trying
+to quickly set up a custom site, Jekyll comes out of the box with too
+many defaults on its site structure, and the way in which posts are
+generated and such.  Jekyll's behaviour is generally good for quickly
+making a blog and such, but when I'm trying to build a site from
+scratch, the extra effort to reset all of Jekyll's helpful defaults is
+a pain.
+
+So, for a quick barebones site generation with all the goodies (like
+file-watching and such) that you'd expect, I'd recommend =eleventy=
+([[https://www.11ty.dev/][link]]). 
+
+Eleventy is very easy to setup, quoting from their home page:
+
+#+begin_quote
+... Now we'll create an =index.md= [[https://commonmark.org/help/][Markdown]] file. ...
+#+begin_src bash
+echo '# Heading > index.md'
+#+end_src
+#+end_quote
+
+Once you have some source files, then to run the static site generation:
+#+begin_quote
+Run Eleventy using =npx=, an [[https://www.npmjs.com/][npm]]-provided command that is bundled with Node.js.
+#+begin_src bash
+npx @11ty/eleventy --serve
+#+end_src
+#+end_quote
+
+With just these two commands you'll be up and running, and Eleventy
+will start building your site from your source language:
+
+#+begin_src bash
+[11ty] Writing _site/index.html from ./index.md (liquid)
+[11ty] Wrote 1 file in 0.03 seconds (v3.0.0)
+[11ty] Watching…
+[11ty] Server at http://localhost:8080/
+#+end_src
+
+In this case, by default, Eleventy writes the build output into a
+ =_site= directory, and you can pair this with =live-server= to
+ automatically refresh your webpage whenever the source files change
+ and the project is rebuilt.
+
+** Tip 3: Pug for faster HTML authoring
+
+Now in the above example, Eleventy uses one of its builtin
+pre-processors to convert markdown files to HTML in a way that you
+might be used to with Jekyll. Now, if we want more control over the
+exact structure of the HTML that is generated, then I tend to prefer
+another intermediate language instead, called Pug/Jade ([[https://pugjs.org/api/getting-started.html][link]]).
+
+Essentially, you can think of pug like a python-esque whitespace-based
+shorthand for HTML:
+#+begin_src pug
+  html
+    head
+      meta(charset="utf8")
+      link(rel="stylesheet", href="/style.css")
+    body
+      header
+        h1 Hello world!
+#+end_src
+I find it particularly useful for quickly prototyping like HTML
+elements and css-styles, in particular due to the ergonomic syntax for
+adding classes to divs:
+#+begin_src pug
+  div.my-class
+    p Hello
+#+end_src
+The above expands to:
+#+begin_src html
+  <div class="my-class">
+    <p>Hello</p>
+  </div>
+#+end_src
+As you can see, in contrast to working with pure HTML, pug's syntax
+makes it very easy to both see the structure of HTML, and to quickly
+manipulate and modify it.
+
+One of the nice things about Eleventy is that it has some partial
+support for pre-processing using Pug:
+#+begin_src js
+// file: eleventy.config.js
+import pugPlugin from "@11ty/eleventy-plugin-pug";
+
+export default function (eleventyConfig) {
+   // enable plugin for pug 
+   eleventyConfig.addPlugin(pugPlugin);
+}
+#+end_src
+Note: I say partial support because Eleventy also has a templating
+system where you can define layouts to build pages from, but this
+doesn't integrate well with Pug's own templating system, so it can
+become a bit brittle.
+
+This is fine for my purposes because I don't ever plan to use Eleventy
+as the main static site-generator for my websites, this whole setup is
+just to quickly prototype designs and CSS styles, and once I've
+figured out a decent combination, then I can integrate into a more
+robust system like Jekyll.
+
+** Tip 4: Tailwind (+ Pug)
+
+The final part of JS-witchery that I had to learn about and work out,
+was Tailwind ([[screen:https://tailwindcss.com/][link]]), which is also pretty rad, and integrates nicely
+with pug. I'd heard a lot about Tailwind from like my web-dev friends,
+but I'd never dug into it, so it just seemed like magic.
+
+In essence, Tailwind is framework for allowing developers to quickly
+build styles by modifying HTML directly rather than having to do a
+dance of modifying CSS styles and HTML at the same time.
+
+So, rather than writing something like:
+#+begin_src css
+  my-div {
+      display: flex;
+      margin-left: auto;
+      margin-right: auto;
+  }
+#+end_src
+Then going and also modifying your HTML to add =my-div= to a class in my
+HTML, using tailwind, we'd elide writing a custom class in the first
+place, and instead write the following HTML directly:
+#+begin_src html
+  <div class="flex mx-auto">
+  ...
+  </div>
+#+end_src
+In other words, Tailwind defines a collection of essentially
+single-property classes out of the box that users can then mix and
+match on their HTML to get the desired styles they want.
+
+When you want a particular property for a HTML object, you can search
+up the property on the Tailwind site ([[https://tailwindcss.com/][link]]). It takes a bit of time to
+get used to the names that Tailwind gives to each of these classes,
+but they're fairly systematically designed and once you figure out the
+patterns you can usually work out the name without even having to look
+it up!
+
+
+Another cool thing is that this methodology integrates *amazingly* with
+Pug!
+#+begin_src pug
+div.flex.mx-auto
+  ...
+#+end_src
+Pug seems to not be that popular with webdevs for some reason, and I
+honestly don't know the reason why, it's honestly so amazing aaaaah omgomgomg!
+
+Now Tailwind also involves some preprocessing --- to avoid generating
+overly-large css files with all of the Tailwind classes present in it,
+Tailwind itself provides a preprocessor to which you can feed in your
+html/pug files and it will only generate the classes that you use.
+
+I think there might be a way to integrate Tailwind into Eleventy
+directly so this preprocessing happens through Eleventy itself, but I
+wasn't able to work out how exactly.
+
+In the end, a good pipeline that I found worked for me was to run
+Tailwind's preprocessor concurrently with Eleventy and then configure
+Eleventy to treat Tailwind's output css file as one of its inputs.
+
+So to do this, I used the following scripts in my =package.json= file:
+#+begin_src js
+{
+  ...
+  "scripts": {
+    // script for running eleventy in watch mode
+    "11ty:watch": "cross-env NODE_ENV=development eleventy --watch --incremental",
+    // script for running tailwind in watch mode
+    "css:watch": "tailwindcss -i ./style/base.css -o ./_includes/style.css -w --postcss",
+    // when serving, run tailwind and eleventy concurrently
+    "serve": "concurrently -c auto npm:css:watch npm:11ty:serve",
+  },
+  ...
+}
+#+end_src
+You'll need the =concurrently= Node.js package installed for this (and
+=eleventy= and =tailwind= if you don't have it installed already).
+
+The above rule tells Tailwind's preprocessor to treat =./style/base.css=
+as the raw source CSS files to be preprocessed and extended with
+Tailwind's built-in classes, and then outputs it to
+`./_includes/style.css` for Eleventy to process.
+
+Finally, I added the following rule to my Eleventy config to tell it
+to treat the output of Tailwind, =./_includes/style.css= as just another
+one of it's input source files, so each time Tailwind updates its
+output, this triggers Eleventy to also rebuild automatically!
+#+begin_src js
+// file: eleventy.config.js
+import pugPlugin from "@11ty/eleventy-plugin-pug";
+
+export default function (eleventyConfig) {
+   ...
+   // copy over static files
+   eleventyConfig.addPassthroughCopy({
+     '_includes/style.css': './style.css'
+   });
+}
+#+end_src
+
+Putting it all together, =tailwind=, =pug=, =eleventy= and =live-server= now
+you'll have a some simple Pug source files for which you can quickly
+apply styles and then have your web browser page update almost
+immediately.
+
+** Final Comments
+Okay, so that's about all the tips and tricks I had for static site
+generation!
+
+I found this whole pipeline to be a complete game-changer for how I
+can quickly prototype website designs, and authoring pug html with
+tailwind styles was so quick and ergonomic I was able to build up the
+stylesheet for this website very quickly (admittedly a fair bit of
+this stylesheet was stolen from the Gov.uk designs, but this pipeline
+still helped a great deal).
+
+One final comment I want to make is that the Tailwind community
+actually proposes a workflow where the tailwind classes are actually
+used directly in the final project, and users never write custom
+classes at all, I think it's called utility-driven design or
+something.
+
+I think this makes sense if you're a big website where your designs
+are going to be iterated on frequently, but for my purposes I felt it
+looked a bit ugly having all the tailwind classes present in my HTML,
+so once I'd figured out the styles I wanted, I then went back and
+created custom classes for each one.
+
+Tailwind actually also makes this quite easy as it provides an =@apply=
+construct for including the tailwind properties into a custom class.
+#+begin_src css
+.figure-caption {
+    @apply text-center mt-1;
+}
+#+end_src
+
 
 
 
