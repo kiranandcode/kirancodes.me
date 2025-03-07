@@ -6,7 +6,7 @@
 (require 'htmlize)
 ;; (load-theme 'lab-light)
 (require 'modus-themes)
-(load-theme 'modus-operandi t)
+(load-theme 'modus-operandi t t)
 
 ;;;; Quick Build keybind
 
