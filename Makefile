@@ -1,6 +1,6 @@
 .PHONY: all publish publish-all all clean
 
-EMACS = ~/.scripts/emacs-29.4/src/emacs
+EMACS = emacs-29.4
 all: publish-all
 
 publish: site-config.el

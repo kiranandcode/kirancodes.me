@@ -1,6 +1,6 @@
 #+TITLE: Functional vs Data-Driven development: a Case-Study in Clojure & OCaml
 #+DATE: <2025-03-06 Thu>
-* Functional vs Data-Driven development: a Case-Study in Clojure & OCaml
+* Functional vs Data-Driven development: a Case-Study in Clojure & OCaml :clojure:lisp:ocaml:functionalprogramming:
   :PROPERTIES:
   :EXPORT_DATE: <2025-03-07 Fri>
   :PUBDATE: <2025-03-07 Fri>
