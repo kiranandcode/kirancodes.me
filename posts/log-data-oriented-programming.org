@@ -31,7 +31,7 @@ and then finally we'll compare and contrast with the design used in
 the Brave-Clojure book and the implications for building idiomatic
 programs in each of these respective languages.
 
-All the code for this blog post is available on my github~
+All the code for this blog post is available on my [[https://github.com/kiranandcode/type-and-data-driven-programming-samples][github]]~
 
 ** A primer on the Peg-Thing game
 I've never heard of this game before, maybe I'm too young? haha~
@@ -286,7 +286,7 @@ let apply_move board (c1,cmid, c2) =
 At this point, I had effectively fleshed out the entire API that I
 needed to implement the game. I then wrote a few small helper
 functions to handle input (we won't cover them here, because they're
-not that exciting, but you can check out the code if you're
+not that exciting, but you can check out the [[https://github.com/kiranandcode/type-and-data-driven-programming-samples/blob/main/ocaml/ui.ml][code]] if you're
 interested).
 
 Putting it all together, my final game loop looked like this:

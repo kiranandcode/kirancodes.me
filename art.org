@@ -21,7 +21,7 @@ enjoy the following gallery regardless:
 <blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ljo7rhux2s24" data-bluesky-cid="bafyreidislsswtzvrmypxvj7duzwcckvtg4wfjvprhfp4ljvz6m2vchhvm"><p lang="en">Talking to my hair~
 
 #traditionalArt #comic #webcomic #sliceoflife #comic #webtoon #DigitalArt<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ljo7rhux2s24?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ljo7rhux2s24?ref_src=embed">5 March 2025 at 18:17</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
-#+end_html
+#+end_export
 
 #+begin_export html
 <blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ljmilhyk7k2z" data-bluesky-cid="bafyreicb63jdjc42ulmebksumrjpys53g5cswjvbimkfn3froi4nprfr6e"><p lang="en">My daily routine~ can anyone relate hehe :3 :3 :3
