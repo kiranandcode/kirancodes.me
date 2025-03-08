@@ -1,0 +1,595 @@
+#+TITLE: Functional vs Data-Driven development: a Case-Study in Clojure & OCaml
+#+DATE: <2025-03-06 Thu>
+* Functional vs Data-Driven development: a Case-Study in Clojure & OCaml
+  :PROPERTIES:
+  :EXPORT_DATE: <2025-03-07 Fri>
+  :PUBDATE: <2025-03-07 Fri>
+  :END:
+Recently I've started picking up Clojure, as an attempt to try doing
+some web programming with proper macro support (ClojureScript in
+particular seems to be quite good Lisp implementation with robust web
+integration).
+
+A sort of interesting phenomenon that I've noticed in this process is
+how despite both languages being oestensibly advertised as
+"functional", the actual design and development process in each
+language is quite distinct. OCaml takes a much more type-driven
+approach to development, while Clojure's style is more data-driven,
+and this is an interesting contrast that I'm excited to explore more about.
+
+This blog post was spurred by a [[https://www.braveclojure.com/functional-programming/][particular case-study]] from the Brave
+Clojure book ([[https://www.braveclojure.com][available online]]!), into implementing a small game
+called Peg-Thing in Clojure.  As I read the webpage, I couldn't
+help but think about how differently I'd approach implementing it as
+an OCaml programmer, and I thought it'd be interesting to document
+these differences down.
+
+In the rest of this blog post, we're going to take a deeper look at
+this case study~ We'll start with a basic review of the Peg-Thing
+game, then I'll walk through my initial design as an OCaml programmer,
+and then finally we'll compare and contrast with the design used in
+the Brave-Clojure book and the implications for building idiomatic
+programs in each of these respective languages.
+
+All the code for this blog post is available on my github~
+
+** A primer on the Peg-Thing game
+I've never heard of this game before, maybe I'm too young? haha~
+anyway just in case, let's do a quick primer on what this game
+actually is.
+
+Essentially a game of peg-thing is played on a triangular board (at
+least for this case-study) with a series of holes, filled with pins.
+Initially, the center hole of the triangle is left unfilled.
+
+@@html:<div class="medium-image body" style="margin-left: auto; margin-right: auto; max-width:400pt;"> @@
+[[file:../images/pegged.svg]]
+@@html:</div> @@
+
+The objective of the game is to remove as many pins as possible, and
+you can do this by jumping a pin over another:
+
+@@html:<div class="medium-image body"> @@
+[[file:../images/move.svg]]
+@@html:</div> @@
+
+
+The Brave Clojure implementation allows you to play the game in your
+terminal, and automatically resets when no moves are possible.
+
+#+begin_src zsh
+$ lein run
+Get ready to play Peg Thing!
+How many rows? [5]
+Here is your board:
+       a0
+      b0 c0
+    d0 e0 f0
+   g0 h0 i0 j0
+ k0 l0 m0 n0 o0
+Remove which peg? [e]  
+#+end_src
+
+Awesome, now we know what Peg-Thing is, let's get down to implementing
+this program in OCaml and Clojure~
+
+** OCaml Implementation: Type Driven Development
+
+The first step in my OCaml implementation was to decide upon a core
+representation for the state of the game itself.
+Development in OCaml is very much type driven. We reify our domain
+constraints through appropriate types and functions on that type.
+
+
+After mulling over different approaches, I decided to go with a simple
+list-based representation:
+
+#+begin_src ocaml
+(* file: board.ml  *)
+type t = bool list list
+#+end_src
+
+Here, we use a list of list of booleans to represent the contents of
+the board. The first list corresponds to the first row, and so on and
+so forth, and the value =true= represents that a hole has been filled
+with a peg.
+
+#+begin_src ocaml
+  (* example board of size 3 *)
+  let board_3 : t = [
+    [        true      ];
+    [    true; true    ];
+    [ true; true; true ];
+  ]
+#+end_src
+
+
+Obviously this type in itself doesn't encode any specifics of our
+game, so the next step is to write some functions that interpret it
+appropriately. The first of these was an =init= function to construct
+new boards:
+#+begin_src ocaml
+let init n =
+  List.init n (fun i -> List.replicate (i + 1) true)
+#+end_src
+Aaah functional programming is so nice~ We just compose the functions
+we need, and voila, a triangular board of the appropriate size!
+
+I believe the old quote goes, "To err is human, to debug divine", or
+something like that... errr, the point is, we're going to make
+mistakes, so having a way to visualise our data is a pretty essential
+task, so the next function I went to write was something to visualise
+the game board:
+
+#+begin_src ocaml
+  let to_string (t: t) =
+    let _, ls = 
+      List.fold_map (fun i ls ->
+          List.fold_map (fun i c ->
+              i + 1, render_coord i c
+            ) i ls
+          |> Pair.map_snd (String.concat " ")
+        ) 0 t in
+    (* calculate the longest row  *)
+    let len =
+      List.map String.length ls
+      |> List.reduce_exn Int.max in
+    (* pad everything to that size *)
+    List.map (pad len) ls
+    |> String.concat "\n"
+#+end_src
+Uuuh this function was a little more complex than I'd like, if I spent
+a bit more time I could probably simplify it a little
+more. Essentially, we thread an index value through the list of lists
+(hence the nested =fold_map=), and for each boolean, we render it as a
+peg. At the end, we pad everything to an even length and join the rows
+together.
+
+At this point, we have enough such that we can quickly test our
+implementation is working with a simple main function:
+#+begin_src ocaml
+  (* file: main.ml *)
+  let () =
+    let board = Board.init 5 in
+    print_endline (Board.to_string board)
+#+end_src
+which will output:
+#+begin_example
+       a0
+      b0 c0
+    d0 e0 f0
+   g0 h0 i0 j0
+ k0 l0 m0 n0 o0
+#+end_example
+
+Now we had this basic structure up and running, the next step in my
+implementation was to write a number of basic helper functions to
+manipulate the state of the board (periodically using the =to_string=
+function to check they were behaving correctly):
+
+#+begin_src ocaml
+let get board (i,j) =
+  List.nth board i
+  |> List.get_at_idx_exn j
+
+let set board (i,j) v =
+  List.set_at_idx i
+    (List.nth board i
+     |> List.set_at_idx j v)
+    board
+
+let in_bounds board (i,j) =
+  0 <= i && i < List.length board &&
+  0 <= j && j < List.length (List.nth board i)
+#+end_src
+
+At the start of this implementation I had already conceptually decided
+that I'd be using tuples of ints to address into the game board, so at
+this point, I decided to reify that idea again into types and define a
+dedicated coordinate datatype.
+
+#+begin_src ocaml
+  (* file: coord.ml *)
+  let triangle l = l * (l + 1) / 2
+  type t = int * int
+
+  let to_char (l,r) =
+      int_to_char (triangle l + r)
+
+  let equal = Pair.equal Int.equal Int.equal
+
+  let (+) (i,j) (i1,j1) = (i + i1,j + j1)
+  let (-) (i,j) (i1,j1) = (i - i1,j - j1)
+  let (/) (i,j) by = (i/by,j/by)
+  let (=) c1 c2 = equal c1 c2
+#+end_src
+In fact, part of the reason I decided that this list of lists
+representation for the game board was suitable for the program was
+because I had noticed that all of the possible moves that a peg can
+make can actually easily be encoded as dx,dy coordinates:
+#+begin_src ocaml
+  (* file: coord.ml *)
+  let directions = [
+    (-1,  0); (-1, -1);
+    ( 0, -1); ( 0, 1);
+    ( 1,  0); ( 1, 1)
+  ]
+#+end_src
+We could oestensibly have given each direction a name and used an
+inductive data-type, but given the isographic board, choosing names
+that made sense would have been a little bit difficult, so the data
+itself should suffice.
+
+Combining these basic definitions so far, we actually get a fair bit
+of mileage even already, and for example, get all the neigbours of a
+peg, or all the pegged coords:
+#+begin_src ocaml
+let neigbours board coord =
+  List.map (Coord.(+) coord) Coord.directions
+  |> List.filter (in_bounds board)
+
+let coords board =
+  List.init (List.length board)
+    (fun i -> List.init (i+1) (fun j -> (i,j)))
+  |> List.flatten
+
+let pegged_coords (board: t) =
+  coords board
+  |> List.filter (get board)
+#+end_src
+This is a somewhat common pattern that I like in OCaml --- if you can
+represent all of the "choices" in your data-structure as a list, then
+it's quite easy to build up somewhat complicated combinatorial queries
+by simply reusing list comprehensions, which is what I use to great
+effect in the above functions.
+
+Now, here's the cool part! It turns out we've now built up a suitable
+tower of abstractions that we can actually generate the list of all
+valid moves for a game board with some relatively simple code:
+#+begin_src ocaml
+let valid_moves (board: t) =
+  let try_move coord dir =
+    let open Option in
+    (* two steps have to be in bounds *)
+    let* h1 = if_ (in_bounds board) Coord.(coord + dir) in
+    let* h2 = if_ (in_bounds board) Coord.(h1 + dir) in
+    (* coord we're hopping over has to be a peg *)
+    let* _ = if_ (get board) h1 in
+    (* we have to be hopping into a peg *)
+    let* _ = if_ Fun.(not % get board) h2 in
+    return (coord, h1, h2) in
+
+  pegged_coords board
+  |> List.flat_map (fun coord ->
+      Coord.directions
+      |> List.filter_map (try_move coord))
+#+end_src
+Here, we iterate over all the pegged coords, and for each one, we try
+making a move in each of the valid directions using this =try_move=
+function.
+
+=try_move= is in itself a rather interesting function -- given the need
+for short circuiting and early exits, here I make use of OCaml 4.0's
+monadic let bindings =let*= and so forth, and the body of =try_move=
+simply collects the two coordinates in the direction =dir= from =coord=
+and checks that the first one is filled, and the next is not (i.e this
+constitutes a valid move). Finally, if it is a valid move, we then
+return a tuple of the coord, the peg to remove, and the peg to place.
+#+begin_src ocaml
+let apply_move board (c1,cmid, c2) =
+  let board = set board c1 false in
+  let board = set board cmid false in
+  let board = set board c2 true in
+  board
+#+end_src
+
+At this point, I had effectively fleshed out the entire API that I
+needed to implement the game. I then wrote a few small helper
+functions to handle input (we won't cover them here, because they're
+not that exciting, but you can check out the code if you're
+interested).
+
+Putting it all together, my final game loop looked like this:
+#+begin_src ocaml
+let () =
+  print_endline "Get ready to play Peg Thing!";
+  let rows = Ui.get_rows 5 in
+  let board = Board.init rows in
+  Ui.print_board board;
+  let peg = Ui.get_coord_init board in
+  let board = Board.set board peg false in
+
+  let rec loop board =
+    Ui.print_board board;
+    if Board.valid_moves board |> List.is_empty
+    then print_endline "No more moves!"
+    else
+      let move = Ui.get_move board in
+      loop (Board.apply_move board move) in
+  loop board
+#+end_src
+Very cute, very short, and very concise~ Damn I do love programming in OCaml sometimes hehe~
+
+** Clojure Implementation: Data Driven Development?
+Okay, now, for the Clojure implementation, I derived this by following
+through the tutorial on Brave Clojure.
+
+In the interests of fairness, I'm not going to criticise the
+performance or other minor details of the implementation, because I
+understand those might have been more chosen for pedagogical reasons,
+but we're going to focus more on the general design and development
+process.
+
+Now, the wildest part of the Clojure implementation as described in
+Brave Clojure, is the representation of the board itself!
+
+In the book's implementation, boards are represented by a mapping from
+the hole (represented as ints), to a map dictating whether they are
+pegged, and the moves that that peg can make.
+#+begin_src clojure
+{1 {:connections {6 3, 4 2}, :pegged true}
+ 4 {:connections {1 2}}
+ 6 {:connections {1 3}}}
+#+end_src
+In this example, the hole 1 is pegged, and it can be moved to 6, jumping
+over 3.
+
+In contrast to my OCaml definition, which was very representation
+specific, this Clojure encoding focuses more on the underlying
+"semantics" of the game board rather than a specific implementation.
+
+From the perspective of the game, the only thing that functions care
+about for a peg, are specifically this mapping from holes to whether
+they're pegged or not, and to which spaces they can be moved.
+
+Once the book has sketched out this conceptual data representation,
+then it begins defining functions to manipulate it. In this case, a
+function to connect two points on the board:
+#+begin_src clojure
+(defn connect
+  "Form a mutual connection between two positions"
+  [board max-pos pos neighbor destination]
+  (if (<= destination max-pos)
+    (reduce (fn [board [p1 p2]]
+              (assoc-in board [p1 :connections p2] neighbor))
+            board
+            [[pos destination] [destination pos]])
+    board))
+#+end_src
+The semantics of this function are somewhat self explanatory~ The
+magic is really handled by this =assoc-in= function, which is one of the
+goodies that Clojure comes built in with for data structure
+manipulation, and essentially updates a nested map such that the path
+src_clojure[:exports code]{[p1 :connections p2]} will map to a
+particular value such as =neighbor=, and uses that to form a connection
+between pos and destination and visa versa.
+
+Now, an interesting consequence of this encoding is that functions
+need to do a little bit more maths to figure out coordinates, because
+it's no-longer encoded into the representation itself.
+
+To this end, the Brave Clojure book takes an interlude to use
+lazy-streams to define a helper sequence of lazy numbers[fn:1].
+#+begin_src clojure
+(defn tri*
+  "Generates lazy sequence of triangular numbers"
+  ([] (tri* 0 1))
+  ([sum n]
+     (let [new-sum (+ sum n)]
+       (cons new-sum (lazy-seq (tri* new-sum (inc n)))))))
+#+end_src
+
+Then, the book introduces functions to compute row lengths and
+positions on the game board using this lazy sequence:
+#+begin_src clojure
+(defn row-num
+  "Returns row number the position belongs to: pos 1 in row 1,
+  positions 2 and 3 in row 2, etc"
+  [pos]
+  (inc (count (take-while #(> pos %) tri))))
+
+(defn triangular? "Is the number triangular?"
+  [n]
+  (= n (last (take-while #(>= n %) tri))))
+#+end_src
+
+With these helpers, we can now define /semantic/ functions that
+appropriately manipulate this more basic representation of the game board:
+#+begin_src clojure
+  (defn connect-right
+      [board max-pos pos]
+      (let [neighbor (inc pos)
+            destination (inc neighbor)]
+        (if-not (or (triangular? neighbor)
+                    (triangular? pos))
+          (connect board max-pos pos neighbor destination)
+          board)))
+
+  (defn remove-peg
+    "Take the peg at given position out of the board"
+    [board pos]
+    (assoc-in board [pos :pegged] false))
+
+  (defn place-peg
+    "Put a peg in the board at given position"
+    [board pos]
+    (assoc-in board [pos :pegged] true))
+#+end_src
+(In the above function, a triangular number will always be on the
+rightmost edge of the board, and so connecting right won't be
+possible.)
+
+In a similar fashion to the OCaml version, using these basic
+functions, the book then goes on to build up more complex ones:
+#+begin_src clojure
+(defn add-pos
+  "Pegs the position and performs connections"
+  [board max-pos pos]
+  (let [pegged-board (assoc-in board [pos :pegged] true)]
+    (reduce (fn [new-board connection-creation-fn]
+              (connection-creation-fn new-board max-pos pos))
+            pegged-board
+            [connect-right connect-down-left connect-down-right])))
+#+end_src
+This =add-pos= function inserts a new peg into the board and updates its
+connections appropriately.
+
+Because the data-representation is more semantic-focused than
+implementation focused, finding valid-moves actually becomes a lot more simple:
+#+begin_src clojure
+(defn valid-moves
+  "Return a map of all valid moves for pos, where the key is the
+  destination and the value is the jumped position"
+  [board pos]
+  (into {}
+        (filter (fn [[destination jumped]]
+                  (and (not (pegged? board destination))
+                       (pegged? board jumped)))
+                (get-in board [pos :connections]))))
+#+end_src
+In this case, to work out the valid moves for a peg, we can iterate
+over the connections field in the data and then check that the
+intermediate pegs are appropriate for the move.
+
+The last interesting part of the book's implementation is in actually
+rendering the board, which is something the book leaves for last.
+
+I'm not sure if this is just a matter of how the book is structured,
+or a reflection of how Clojure programmers actually write code, but I
+feel it kinda also makes sense: as the data is already represented
+semantically first, then you don't need a visual representation to
+debug, the data itself is sufficient? maybe? that's just some
+speculation.
+
+Anyway, as the data representation here is more removed from the
+actual board, the visualisation functions have a little more work to
+do to translate the data into a board:
+#+begin_src clojure
+(defn row-positions
+  "Return all positions in the given row"
+  [row-num]
+  (range (inc (or (row-tri (dec row-num)) 0))
+         (inc (row-tri row-num))))
+#+end_src
+In this case, the book reuses it's triangle numbers sequence and uses
+that to work out the positions that correspond to each row. Once these
+have been obtained, then we can again use the /semantic/ operations over
+the data structure to retrieve the relevant information:
+#+begin_src clojure
+(defn render-pos
+  [board pos]
+  (str (nth letters (dec pos))
+       (if (get-in board [pos :pegged])
+         (colorize "0" :blue)
+         (colorize "-" :red))))
+#+end_src
+
+Putting it all together, the final game loop roughly looks like:
+#+begin_src clojure
+(defn prompt-move
+  [board]
+  (println "\nHere's your board:")
+  (print-board board)
+  (println "Move from where to where? Enter two letters:")
+  (let [input (map letter->pos (characters-as-strings (get-input)))]
+    (if-let [new-board (make-move board (first input) (second input))]
+      (user-entered-valid-move new-board)
+      (user-entered-invalid-move board))))
+#+end_src
+The book doesn't put as much effort into refactoring the code to be
+more self contained, so the final loop is formed out of a collection
+of mutually recursive functions that all call each other which makes
+me wince as an OCaml dev, but wouldn't be too hard to separate.
+
+** Conclusions and Takeaways
+A few years ago there was this post on r/OCaml with the
+question: Is data-driven design possible in OCaml?
+
+In that case, that post was a somewhat overzealous Clojure developer
+who, in an attempt to promote his new book, had spent all of five
+minutes learning the basics of OCaml and hastily transpiling some
+simple exercises into OCaml. The resulting code, as you might imagine,
+was terrible, and the post itself was quickly removed as low effort
+bait. Revisiting this topic again a few years later, I think he might
+have had a point.
+
+To be honest, as an OCaml developer, when I first read through Brave
+Clojure's description of their representation of the game board, I was
+genuinely quite put off and I kinda skimmed that entire chapter.
+#+begin_src clojure
+{1 {:connections {6 3, 4 2}, :pegged true}
+ 4 {:connections {1 2}}
+ 6 {:connections {1 3}}}
+#+end_src
+Being used to the conventions of OCaml, this representation seemed
+quite poor, and I was spurred instantly to think about how I would do
+it "correctly" in OCaml (eventually leading to this post).
+
+I think, actually, in hindsight, I don't think either of these
+representations are necessarily wrong or better or worse. I think they
+just represent different paradigms of what these languages consider
+idiomatic.
+
+In OCaml, I spent time considering the operations I'd need to support, and
+used that to carefully choose the types that I would use to represent
+my data. Writing types serves as a means to reify knowledge into my
+codebase instead of keeping it in my head, but at the same time types
+constrain the operations that are permitted, and choosing the right
+abstraction can change an hard problem into an easy one.
+
+After digesting the Brave Clojure book, I'm realising that in Clojure
+design is done through a different philosophy. When choosing the
+representation of the data, because the core operations (=reduce=,
+=filter=, =assoc=, etc.) interoperate between all the datatypes,
+developers are instead encouraged to choose a representation that
+instead reflects the /semantics/ of their underlying data. In this case,
+the relevant semantics of the game board for this game, were whether
+nodes were pegged, and the other nodes they were connected to. To
+represent this, the Clojure developer then selects a mix of maps,
+lists and vectors to accurately reflect the nature of these relations.
+Instead of selecting the representation based on types, you design the
+system around the data itself: data-driven design.
+
+So, is data-driven design possible in OCaml?
+
+At this point, the seasoned OCaml developer might retort that there's
+nothing stopping me from encoding the Clojure representation into
+OCaml itself. OCaml certainly has lists and maps and arrays, so
+there's nothing exceptionally challenging about the Clojure
+implementation.  The problem here is that the resulting code would be
+far from idiomatic. Maps and Sets and lists all have different
+interfaces, and nested lookups can be quite verbose.
+
+I think the core distinction here is that Clojure has been designed
+with a small set of specific data structures in mind, and all of it's
+core abstractions are interchangable over them. Filter operates just
+as well over maps as it does lists and so on and so forth. This
+interoperability means that Clojure developers don't need to think as
+much about what operations their data-types support, and can instead
+freely pick them to reflect their domain.
+
+This is not necessarily to say Type-driven development is bad by any
+means, but more just that it's intriguing how the small differences
+between these two languages result in quite widely different
+approaches to even just design.
+
+I'm still very much in the learning phase of Clojure, so I haven't
+been around long enough to see how well this approach to design
+scales, and especially interesting for me given my research, how
+effectively this paradigm handles changes and refactoring.
+
+I'd like to end this post with some interesting questions that this
+made me think about:
+
+- Could we have a type-system for data-oriented programs?
+- What level of static guarantees could we provide while still
+  allowing for natural and idiomatic code?
+- What kind of static guarantees would even be useful for a data-driven developer?
+- What type would you give to =assoc-in=? 
+
+Anyway, happy hacking~
+
+
+** Footnotes
+
+[fn:1] yes, Clojure is lazy but also has mutation, make it make sense haha.
