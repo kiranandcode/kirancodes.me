@@ -18,6 +18,24 @@ enjoy the following gallery regardless:
 
 @@html: <div class="artwork-grid">@@
 #+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ljo7rhux2s24" data-bluesky-cid="bafyreidislsswtzvrmypxvj7duzwcckvtg4wfjvprhfp4ljvz6m2vchhvm"><p lang="en">Talking to my hair~
+
+#traditionalArt #comic #webcomic #sliceoflife #comic #webtoon #DigitalArt<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ljo7rhux2s24?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ljo7rhux2s24?ref_src=embed">5 March 2025 at 18:17</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_html
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3ljmilhyk7k2z" data-bluesky-cid="bafyreicb63jdjc42ulmebksumrjpys53g5cswjvbimkfn3froi4nprfr6e"><p lang="en">My daily routine~ can anyone relate hehe :3 :3 :3
+
+#Krita #Webcomic #QueerArt #TransArtist #DigitalArt #webcomics #Krita_artists #BskyArt  #comicart #illustration #Sketch #DailyLife #SliceOfLife<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ljmilhyk7k2z?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3ljmilhyk7k2z?ref_src=embed">5 March 2025 at 01:50</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
+<blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lio44ccbm22m" data-bluesky-cid="bafyreicbbbcqihqnp4swoqaeiwxombppeieindumruvxmi6wa4wel3nibm"><p lang="en">New profile picture~
+
+#trans #queerArt #DigitalArt #krita #MadeWithKrita #Sketch #Anime<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lio44ccbm22m?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lio44ccbm22m?ref_src=embed">20 February 2025 at 23:46</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>
+#+end_export
+
+#+begin_export html
 <blockquote class="bluesky-embed" data-bluesky-uri="at://did:plc:i32jjsch6xqcguzsf2lgbfyu/app.bsky.feed.post/3lc3xoo5c5c2z" data-bluesky-cid="bafyreidwinklhtleamaibmtagcqpsr6jvvjmdmvmusnrln545n3kc2g7h4"><p lang="en">friendly reminder that if I&#x27;m losing an argument to you online that this is who you are bullying~
 
 #QueerArt #DigitalArt #Trans #MadeWithKrita #Krita #Anime #Manga<br><br><a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lc3xoo5c5c2z?ref_src=embed">[image or embed]</a></p>&mdash; Kiran (She/Her) (<a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu?ref_src=embed">@kirancodes.me</a>) <a href="https://bsky.app/profile/did:plc:i32jjsch6xqcguzsf2lgbfyu/post/3lc3xoo5c5c2z?ref_src=embed">November 29, 2024 at 4:08 PM</a></blockquote><script async src="https://embed.bsky.app/static/embed.js" charset="utf-8"></script>

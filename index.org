@@ -56,6 +56,9 @@ The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
 
 ** Publications
 *** Conference Papers
+- Sound and efficient generation of Data-Oriented exploits via programming language synthesis - USENIX 2025 [[[file:pdfs/doppler-usenix25.pdf][pdf]], [[https://github.com/verse-lab/doppler][code]]]
+  @@html:<br/>@@
+  Yuxi Ling, Gokul Rajiv, _Kiran Gopinathan_, Ilya Sergey
 - Concurrent Data Structures Made Easy - OOPSLA 2024 [[[file:pdfs/obatcher-oopsla24.pdf][pdf]], [[https://github.com/verse-lab/obatcher_ds/tree/paper-artefact][code]], [[https://github.com/verse-lab/batcher-in-rust][code(rust)]]]
   @@html:<br/>@@
   Callista Le, _Kiran Gopinathan_, Koon Wen Lee, Ilya Sergey
