@@ -56,6 +56,9 @@ The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
 
 ** Publications
 *** Conference Papers
+- Accelerating Automated Program Verifiers by Automatic Proof Localization - CAV 2025
+  @@html:<br/>@@
+  _Kiran Gopinathan_, Dionysios Spiliopoulos, Vikram Goyal, Peter Müller, Markus Püschel, Ilya Sergey
 - Sound and efficient generation of Data-Oriented exploits via programming language synthesis - USENIX 2025 [[[file:pdfs/doppler-usenix25.pdf][pdf]], [[https://github.com/verse-lab/doppler][code]]]
   @@html:<br/>@@
   Yuxi Ling, Gokul Rajiv, _Kiran Gopinathan_, Ilya Sergey
@@ -107,6 +110,9 @@ The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
   For poster and presentation on Certifying Bloom Filters.
 ** Service
 *** Mentoring, Volunteering and Event Organisation
+  - [[https://conf.researchr.org/home/icfp-splash-2025/ocaml-2025][OCaml Users and Developers Workshop]], 2025
+    @@html:<br/>@@
+    Chair of the OCaml Workshop 2025 co-located at ICFP 2025
   - [[https://sigplan.org/LongTermMentoring/][SIGPLAN-M]] (Long-term External Mentoring for PhD Students and Researchers), 2022-present
     @@html:<br/>@@
     Member of the Operations Team
@@ -115,19 +121,20 @@ The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
     Developed and maintained the [[https://nus-plse.github.io/][website]] for NUS's PLSE groups
     @@html:<br/>@@
     Designed the [[https://twitter.com/nus_plse/status/1554361400935747584][logo]] for the [[https://twitter.com/nus_plse][NUS PLSE social media account]]
-  - [[https://conf.researchr.org/track/aplas-2022/aplas-2022-papers][Asian Symposium on Programming Languages and Systems]] 2022
+  - [[https://conf.researchr.org/track/aplas-2022/aplas-2022-papers][Asian Symposium on Programming Languages and Systems]], 2022
     @@html:<br/>@@
     Designed the [[https://twitter.com/splashcon/status/1577887044004618242][badges]] given for artefact evaluation results
   - NUS Programming Languages Mentoring Workshop (PLMW) at OOPSLA 2021
     @@html:<br/>@@
     Panellist on the PhD Life Panel
-  - NUS [[https://researchweek.comp.nus.edu.sg/index_Aug2021.html][Computing Research Week 2021]]
+  - NUS [[https://researchweek.comp.nus.edu.sg/index_Aug2021.html][Computing Research Week]], 2021
     @@html:<br/>@@
     Organised and ran NUS' internal research week conference as the Program Chair
-  - [[https://www.easychair.org/cfp/ifl2019][Symposium on Implementation and Application of Functional Languages]] 2019
+  - [[https://www.easychair.org/cfp/ifl2019][Symposium on Implementation and Application of Functional Languages]], 2019
     @@html:<br/>@@
     Served as a Student volunteer
 *** Program Committee Member
+  + OOPSLA 2026
   + ICFP 2025
   + OCaml Workshop 2023
   + AIPLANS 2021
