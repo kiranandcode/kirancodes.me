@@ -21,7 +21,7 @@ newer and better tools for the maintenance and automation of formal
 verification---the process of using computers to construct
 mathematical proofs about the software correctness---and covers a
 broad range of techniques, such as proof repair, invariant inference
-or automated verification.
+or automated verification. See my [[file:docs/research.pdf][research statement]].
 
 Notable highlights of my work include: producing the [[file:pdfs/ceramist-draft.pdf][first formally
 verified proof]] of the probabilistic properties of the [[https://en.wikipedia.org/wiki/Bloom_filter][Bloom Filter]];
@@ -33,6 +33,7 @@ Other fun facts about me: I am a trans woman (egg cracked 12/2023,
 started HRT 20/04/2024); I sometimes make [[https://kirancodes.itch.io/kirans-day-off][games]] in my free time ([[https://kirancodes.itch.io/][my
 itch.io page]]), I'm a hobbyist artist and use [[file:art.org][artwork]] to capture
 aspects of my lived experiences, and sometimes I write [[https://github.com/kiranandcode][code]].
+
 
 # I completed my undergraduate degree in Computer Science at University
 # College London. In the past, I've worked in a range of CS disciplines,
@@ -55,6 +56,10 @@ The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
   I also post under [[https://bsky.app/profile/kirancodes.me][@kirancodes.me]] on Bluesky! (hey, that's the same domain as this site~)
 
 ** Publications
+*** Thesis
+- Scaling the Evolution of Verified Software - PhD Thesis [[[file:docs/thesis.pdf][pdf]]]
+  @@html:<br/>@@
+  _Kiran Gopinathan_
 *** Conference Papers
 - Accelerating Automated Program Verifiers by Automatic Proof Localization - CAV 2025
   @@html:<br/>@@
