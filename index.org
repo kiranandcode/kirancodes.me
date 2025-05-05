@@ -21,7 +21,7 @@ newer and better tools for the maintenance and automation of formal
 verification---the process of using computers to construct
 mathematical proofs about the software correctness---and covers a
 broad range of techniques, such as proof repair, invariant inference
-or automated verification. See my [[file:docs/research.pdf][research statement]].
+or automated verification. See my [[file:docs/research.pdf][[research statement]]]; [[[file:docs/teaching.pdf][teaching statement]]].
 
 Notable highlights of my work include: producing the [[file:pdfs/ceramist-draft.pdf][first formally
 verified proof]] of the probabilistic properties of the [[https://en.wikipedia.org/wiki/Bloom_filter][Bloom Filter]];
