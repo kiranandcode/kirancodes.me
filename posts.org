@@ -6,6 +6,7 @@
 :PROPERTIES:
 :subtitle: My Ramblings on Life, Software, Games and Everything
 :END:
+- [[file:posts/log-how-to-prove-it-maths.org][08 May, 2025 - How to (actually) prove it - New Frontiers of Mathematics & Computing in Lean]]
 - [[file:posts/log-data-oriented-programming.org][06 Mar, 2025 - Functional vs Data-Driven development: a Case-Study in Clojure & OCaml]]
 - [[file:posts/log-building-websites-for-dummies.org][19 Dec, 2024 - Building static websites for dummies]]
 - [[file:posts/log-writing-activitypub.org][19 Apr, 2023 - How I wrote an Activitypub Server in OCaml: Lessons Learnt, Weekends Lost]]

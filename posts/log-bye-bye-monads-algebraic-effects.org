@@ -1,6 +1,6 @@
 #+TITLE: Friendship ended with Monads: Testing out Algebraic effects in OCaml for Animations
 #+DATE: <2021-01-01 Fri>
-#+WARNING: Tihs post was written a long time ago, before I began my transition. This warning is included to inform you that this post adopts a tone that I no longer feel is appropriate and that the page may make use of design that is not consistent with the rest of the site.
+#+WARNING: This post was written a long time ago, before I began my transition. This warning is included to inform you that this post adopts a tone that I no longer feel is appropriate and that the page may make use of design that is not consistent with the rest of the site.
 * Friendship ended with Monads: Testing out Algebraic effects in OCaml for Animations :ocaml:effects:animations:game:
   :PROPERTIES:
   :EXPORT_DATE: <2021-01-01 Fri>

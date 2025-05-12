@@ -8,6 +8,15 @@
 (require 'modus-themes)
 (load-theme 'modus-operandi t t)
 
+;;;;; Inline js 
+
+(add-to-list 'org-src-lang-modes '("inline-js" . javascript)) ;; js2 if you're fancy
+(defvar org-babel-default-header-args:inline-js
+  '((:results . "html")
+    (:exports . "results")))
+(defun org-babel-execute:inline-js (body _params)
+  (format "<script type=\"text/javascript\">\n%s\n</script>" body))
+
 ;;;; Quick Build keybind
 
 (defun replace-killed-buffer-in-file (filename)
@@ -1186,7 +1195,7 @@ holding export options."
 
         ("static"
          :base-directory ,(html-dir)
-         :base-extension "pdf\\|png\\|gif\\|jpg\\|svg\\|jpeg\\|js\\|cs\\|ttf\\|css\\|ico"
+         :base-extension "pdf\\|png\\|gif\\|jpg\\|svg\\|jpeg\\|js\\|cs\\|ttf\\|css\\|ico\\|webp"
          :recursive t
          :publishing-directory ,build-dir
          :publishing-function org-publish-attachment)
