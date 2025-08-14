@@ -1,0 +1,662 @@
+#+TITLE: Why Lean 4 replaced OCaml as my Primary Language 
+#+DATE: <2025-08-13 Wed>
+* Why Lean 4 replaced OCaml as my Primary Language :programming_languages:code:theorem_proving:perspectives:
+  :PROPERTIES:
+  :EXPORT_DATE: <2025-08-13 Wed>
+  :PUB_DATE: <2025-08-13 Wed>
+  :END:
+
+As I was reading Hacker News today, I happened to stumble upon an
+article titled "[[https://xvw.lol/en/articles/why-ocaml.html][Why I Chose OCaml as my Primary Language]]".
+
+This was a particularly interesting read for me: over the
+past few years, I have been gradually transitioning[fn:1] my
+primary language away from OCaml to another, newer, and
+hotter, language: *Lean*![fn:3], and while I could understand
+why the author had chosen OCaml, I'm not sure I personally
+would make that decision.
+
+Given the article waxes poetic on the positive tenets of
+OCaml, I figured it might also be interesting to hear the
+other side of the story --- /Why you might not want OCaml to
+be your primary language/ --- and from an experienced and
+prolific[fn:2] former OCaml dev (and [[https://conf.researchr.org/home/icfp-splash-2025/ocaml-2025][chair of the OCaml
+workshop]] for this year~).
+
+In the rest of this blog post, I'm going to walk through a
+few pain points I've had with OCaml over the past half a
+decade hacking on the language, and why, in the end, they've
+lead me to shift to other langauges, as an added bonus, for
+each one, I'll also give a taster about how these problems
+are solved in Lean, and allude to why I'm so excited about
+it.
+
+My goal with this article is not to needlessly rag on OCaml:
+I've invested[fn:2] a considerable amount of effort into
+OCaml, and I certainly look very fondly upon my time with
+it. My hope in pointing out these issues is both to excite
+the wider community about newer programming languages such as
+Lean, and also give the OCaml community some spotlights on
+areas that could be improved!
+
+Without further ado, let's dive straight in!
+
+** Issue no. 1: A philosophy of WYSIWYG and a lack of optimisations
+An important aspect of OCaml that newcomers might want to
+bear in mind is that it is a language and community that
+prides themselves on being "unsurprising", and this reflects
+in a philosophy of *WYSIWY*.
+
+The key guiding principle across OCaml code is that it is
+very easy to reason about, and a seasoned OCaml dev can
+quickly tell you exactly how a given OCaml function behaves
+at runtime, its performance and how it allocates memory, etc.
+
+#+begin_src ocaml
+let List.iter f =
+    function
+    | [] -> ()                     (* no alloc *) 
+    | h :: t -> f h; List.iter f t (* no alloc *)
+
+let sum ls =
+    let sum = { contents = 0 } in  (* alloc (1 block) *)
+    let f x = sum := !sum + x in   (* alloc (closure) *) 
+    List.iter f ls;                (* no alloc *)
+    a.contents                     (* no alloc *)
+#+end_src
+
+For example, just by looking at the above block of code, we
+can instantly tell that it allocates one block of memory and
+one closure on the heap.
+
+This simplified model means that the runtime performance of
+code is very predictable, and it's easy to manually optimise
+code, but...
+
+*This means as a developer you alone are entirely responsible
+for making your code go fast*, and sometimes this can mean
+obscuring the /logic/ of your program in the quest for
+performance.
+
+As a slightly more concrete example, consider the following
+function, to calculate the both the sum of a list and
+increment each value by its index:
+#+begin_src ocaml
+let incr_sum ls =
+  let f = (fun (sum, i) vl ->   (* alloc (closure) *)
+      let sum = sum + vl in
+      let vl = vl + i in
+      let acc = (sum, i + 1) in (* alloc (tuple) *)
+      (vl, acc)                 (* alloc (tuple) *)
+    )
+  let (ls, (sum, _len)) ==
+      List.fold_map ls (0,0) in (* alloc (list + tuple) *)
+  (ls, sum)                     (* alloc (tuple) *)
+#+end_src
+I've written it out in an expanded form to make the
+allocations clear, but if I were really code-golfing, I'd
+probably write it in my own code in the following simplified
+form:
+#+begin_src ocaml
+let incr_sum ls =
+  let open Pair in
+  let update vl =
+    Fun.flip (map_same2 (+)) (vl, 1) &&& snd_map ((+) vl) in
+  List.fold_map (Fun.flip update) (0,0) ls
+  |> map_fst fst
+  |> swap
+#+end_src
+
+Who said only Haskell programs could be unreadable[fn:5]. Anyway,
+that being said, from a performance perspective, this
+implementation is not ideal because it allocates a lot
+(doubly so for my simplified version) with intermediate
+tuples and closures.
+
+If memory were to become a constraint, then, as the OCaml
+compiler itself is very conservative in its
+optimisations[fn:4], we would be forced to come back to this
+function and manually rewrite it in order to get the desired
+allocation patterns, for example:
+
+#+begin_src ocaml
+let incr_sum ls =
+  let i = ref 0 in              (* alloc (block) *)
+  let sum = ref 0 in            (* alloc (block) *)
+  let f = (fun vl ->            (* alloc (closure) *)
+      i := !i + 1;
+      sum := !sum + vl;
+      vl + (!i - 1)             (* no allocs in hot-path *)
+    ) in
+  let ls = List.map f ls in     (* alloc (list) *)
+  (ls, !sum)                    (* alloc (tuple) *)
+#+end_src
+
+In this case, if you come from an imperative background, then
+maybe this version of the program looks "better" for you, but
+in larger functional programs, building up such functional
+pipelines leads to more idiomatic and shorter code and as
+such is quite ubiquitous if you are an experienced OCaml dev.
+
+The main point I'm making here is that, from an individual
+developer's perspective, I'm forced to strike a compromise
+between concisely expressing my /intent/ (i.e computing this
+fold over a list), and obtaining high performance. In a
+vacuum, these compromises might be okay, but they also come
+with a cost of an increased maintenance burden.
+*** Comparison to Lean
+Finally, let me talk about how this differs in Lean.
+
+As a newer language, it is harder to give any strong claims
+w.r.t the direction of the community, currently as far as I
+am aware, the compiler itself doesn't perform any radical
+optimisations, but the language itself makes up for this with
+a) more memory reuse (thanks to it's clever
+reference-counting with memory reuse algorithm [[https://dl.acm.org/doi/10.1145/3453483.3454032][Perceus]]), and
+b) thanks to a tower of macro-based abstractions that allow
+an extensible form of optimisations while still compiling
+down to a purely functional langauge:
+
+#+begin_src lean4
+def incr_sum (ls: List Int) : List Int × Int := Id.run $ do
+  let mut sum := 0
+  let mut res := #[]
+  for (vl, i) in ls.zipIdx do
+    sum := sum + 1
+    res := res.push (vl + i)
+  return (res.toList, sum)
+#+end_src
+
+Admittedly the abstractions in the above code probably make
+it a bit slower than the comparable OCaml one, but the nice
+thing about Lean's metaprogramming support is that in theory,
+we could incrementally introduce our own optimisations into
+the pipeline in the future as needed, but we'll come on to
+macros in a bit.
+
+** Issue no. 2: A slow and conservative release cycle
+Branching out from the conservative nature of the language
+itself, this same philosophy of being conservative and
+backwards-compatible extends in some sense to the compiler
+ecosystem of the language itself. OCaml is an *amazingly
+stable langauge*, and major kudos have to be given to the
+community for insisting on such high standards for the
+ecosystem:
+
+#+begin_quote
+You can almost bet that code from more than a
+decade ago will run on the latest OCaml compiler, with
+minimal changes, if at all.
+#+end_quote
+
+While this is great for ensuring the utility of your code
+over time, a sad consequence of this is that the language
+evolves at a very slow pace, and this extends even to things
+such as the standard library.
+
+Consider this thread of adding dynamic arrays -- that is, an
+array datastructure with O(1) access and resizable
+allocation:
+
+#+begin_src ocaml
+type 'a t                              (* dynamic array *)
+val alloc: int -> 'a t                 (* alloc *)
+val (.[]): 'a t -> int -> 'a           (* O(1) get *)
+val (.[]<-): 'a t -> int -> 'a -> unit (* O(1) set *)
+val push: 'a t -> 'a -> unit           (* realloc (if needed) *)
+#+end_src
+
+This was initially proposed back in 2019 (/6 years ago/ !!), by a fresh-eyed
+newcomer to the community:
+
+[[file:../images/dyn-array-first.png]]
+
+The [[https://github.com/ocaml/ocaml/pull/9122][PR]] very quickly succumbed to orthogonal discussions of
+naming and was eventually closed.
+
+[[file:../images/dyn-array-naieve.png]]
+
+Three years later, another [[https://github.com/ocaml/ocaml/pull/11563][PR]] was created in a second attempt
+but also fared the same fate:
+
+@@html:<div class="medium-image">@@
+[[file:../images/dyn-array-second.png]]
+@@html:</div>@@
+
+@@html:</br>@@
+
+It was only /last year/, that this long saga was finally
+concluded, and dynamic arrays joined the stdlib:
+
+@@html:<div class="medium-image">@@
+[[file:../images/dyn-array-final.png]]
+@@html:</div>@@
+
+@@html:</br>@@
+
+Now, there were legitimate reasons for the level of caution
+and discussions that the community took to introduce even
+such a simple datastructure to the language: given its focus
+on backwards compatibility, any introduction to the standard
+library would likely continue to have to be maintained for
+the forseeable future, so it was critically important to move
+carefully here.
+
+Again, to stress the point, OCaml's strong commitment to
+backwards comparability, is genuinely and truly one of the
+most impressive features of the language, but you can also
+imagine that as a developer interested in extending and
+exploring new abstractions for their langauge of choice, this
+can be a bit of a dampener.
+
+Features such as [[https://www.cl.cam.ac.uk/~jdy22/papers/modular-implicits.pdf][modular implicits]], an OCaml-specific variant
+of type-classes have been being discussed for several years
+now, and are unlikely to be deployed anytime in the near
+future:
+
+@@html:<div class="medium-image">@@
+[[file:../images/modular-implicits.png]]
+@@html:</div>@@
+
+@@html:</br>@@
+
+*** Comparison to Lean
+Finally, to contrast to Lean: as the new and scrappy kid on
+the block, the Lean language developers a lot more open to
+moving fast and breaking stuff. This has the consequence of
+meaning that often updating to the latest version of Lean
+*will* break your code, and there's an entire cottage industry
+of developers dedicated to fixing core libraries when that
+happens but the cool thing is that as a developer and user of
+the language, you have a very real capacity to get your
+changes incorporated into the language.
+
+@@html:<div class="medium-image">@@
+[[file:../images/lean-mathlib.png]]
+@@html:</div>@@
+
+@@html:</br>@@
+
+** Issue no. 3: Minimal and restricted metaprogramming capabilities
+A language and its ecosystem being conservative is not
+necessarily a problem in itself --- in the case of libraries,
+developers can, and do, create custom replacements of the
+stdlib that change at faster paces as they prefer. For the
+case of language features however, a similar story is only
+possible if the language has good support for metaprogramming
+(think something like Lisp), and sadly, I can not say I am a
+huge fan of OCaml's metaprogramming story.
+
+#+begin_quote
+*Macros in OCaml, in line with its broader philosophy, are
+conservative and generally unexciting.*
+#+end_quote
+
+The general form of macros in OCaml occurs through a
+mechanism known as =ppx= s, which are syntax-to-syntax level
+transformations. Nodes in the AST can be annotated with a tag
+src_ocaml[:exports code]{<node>%<tag_name>}, which can then
+serve as triggers for compiler plugins to rewrite the source
+tree:
+
+#+begin_src ocaml
+let%bind x = List.hd_opt ls in
+...
+
+(* expands to *)
+
+Option.bind (List.hd_opt ls) @@ fun x ->
+...
+#+end_src
+
+These macros are written as OCaml programs that are compiled
+into dynamic libraries linked into the compiler as plugins
+and run before the AST is processed further.
+
+As an example, to implement an anaphoric lambda plugin
+(src_ocaml[:exports code]{[%a it + 1]} transforms to
+src_ocaml[:exports code]{fun it -> it + 1}), one might write:
+#+begin_src ocaml
+  open Ppxlib
+
+  let name = "a"
+
+  let expand ~loc ~path:_ expr =
+    match expr with
+    | expr ->
+      [%expr fun it -> [%e expr]]
+
+  let ext =
+    Extension.declare name Extension.Context.expression
+      Ast_pattern.(single_expr_payload __)
+      expand
+
+  let () =
+    Driver.register_transformation name ~extensions:[ext]
+#+end_src
+
+The OCaml community has been doing some great work with
+Ppxlib, the library for constructing these plugins, but even
+with all the support it provides, constructing any
+non-trivial syntax transformation often requires manually
+wrestling with the compiler AST nodes and can quickly become
+quite unmanageable:
+
+@@html:<div class="medium-image">@@
+[[file:../images/ppxlib-pains.png]]
+@@html:</div>@@
+
+@@html:</br>@@
+
+Beyond just the ease and beauty of writing these plugins, the
+eagle eyed reader may have noticed a more pressing problem
+--- that is, there is no compiler support for syntax hygiene:
+the syntax-to-syntax transformation runs before any further
+processing of the AST, so the macro-author is entirely
+responsible for making sure they don't end up screwing up the
+names. This paired with the complexity of manipulating the
+syntax tree means that it is /extremely/ difficult to make any
+non-trivial macro extension to the language.
+
+Another limitation of this macro format is that it is purely
+syntax-to-syntax, and so it not possible to perform
+type-based transformations. There have been some attempts at
+type-aware metaprogramming, such as MetaOCaml, pioneered by
+the venerable Oleg Kiselyov, but this is mostly staged
+metaprogramming, lives in a isolated branch of the compiler,
+and operates by constructing and writing program strings to a
+temp directory, running the compiler on them and dynamically
+linking them into the current executable --- i.e, no
+solely-compile-time metaprogramming is supported.
+
+*** Comparison to Lean
+
+If I'm being honest, the metaprogramming story is really the
+biggest reason that makes me super excited about Lean. It
+genuinely feels like writing in the language of the future,
+incorporating all the greatest hits from the last 50 years of
+PL research into a well thought out story where /everything
+just works/.
+
+A full coverage of how awesome metaprogramming in Lean is
+would really deserve its own blog post in itself, but I'll
+try and cover some of the coolest aspects of it below.
+
+The first component, is that Lean's core parser is itself
+extensible, and the language provides a mechanism for
+developers to introduce new syntax categories to the language
+on a per-library basis:
+
+#+begin_src lean4
+-- declare a new syntax category
+declare_syntax_cat lang
+syntax ident : lang
+syntax "λ" ident " . " lang : lang
+syntax "(" lang ")" : lang
+syntax lang withPosition(ppSpace lang) : lang
+
+syntax "lambda! " lang : term
+
+#check lambda! λ x . x
+#+end_src
+
+The way this fits into the wider ecosystem is similar to
+state of the art PL languages such as [[https://2023.splashcon.org/details/splash-2023-oopsla/52/Rhombus-A-New-Spin-on-Macros-without-All-the-Parentheses][Rhombus]], where the
+parser uses the user-provided declarations to provide
+additional structure to the textual source code, constructing
+a generic parse tree that the compiler then uses macros to
+provide a semantics to.[fn:6]
+
+Macros in Lean then operate over this generic parse tree and
+transform it into terms in the language that the compiler can
+understand:
+
+#+begin_src lean4
+partial def expandLambda : Lean.TSyntax `lang -> Lean.MacroM (Lean.TSyntax `term)
+| `(lang| $i:ident) =>
+  let str := Lean.Syntax.mkStrLit i.getId.toString
+  `(term| Term.var $str)
+...
+#+end_src
+
+A cool aspect of the way the Lean developers have designed
+the libraries here is in exploiting the dependent-typed
+features of the language to provide some static checks for
+manipulating this tree -- for example src_lean[:exports
+code]{Lean.TSyntax `lang} corresponds to a generic parse tree
+that is constructed from a parser matching the =lang= syntax
+category described above, and the anti-quotation and pattern
+matching will use this information to statically check your patterns.
+
+The macro I presented above operates at the syntax level (in
+macro-expansion phase), and so it purely transforms syntax to
+syntax without type information, but for more complicated
+type-directed transformations, Lean also allows
+/elaboration-phase/ macros, which operate as terms are being
+type-checked, and thus allow access to type information.
+
+#+begin_src lean4
+-- from a Lean library for bindings to Godot
+syntax (name := lean_godot_out) "@" "out" term : term
+
+-- elaboration time macro => access to type information
+@[term_elab lean_godot_out]
+def elabLeanGodotOut : Term.TermElab := fun stx oty => match stx with
+| `(term| @out $stx:term) => do
+  -- elab a term to the compilers internal representation
+  let expr ← Term.elabTerm stx oty
+  -- add an annotation to the compiled information for this term
+  return (addOutMetadata expr)
+#+end_src
+
+
+These facilities also build upon well established practices
+and results from prior metaprogramming research, such as
+Racket's syntax hygiene for enabling scalable and composable
+macros. Metaprogramming in Lean genuinely feels even better
+than doing so in Lisp. In fact, the fact that Lean is a pure
+functional langauge actually allows for features that are not
+possible in Lisp -- for example, Racket developers generally
+recommend not recursively calling the macro-expander within a
+user macro, as this may cause side-effects to be run multiple
+times; as Lean is pure, users are free to run all the
+facilities of the Lean as many times as they need
+recursively, which allows you to do this such as, for
+example, /attempting/ to type-check a term with a specific
+type, and performing different macro-transformations based on
+whether that succeeds or not.
+
+If you are a Lisper, please, if nothing else, I urge you to
+check out Lean --- after several decades, PL research has
+finally progressed to the point that we have a language that
+can fulfil the promises that Lisp envisioned.
+
+** Issue no. 4: An opinionated build system
+This is a relatively minor point, but it's caused me some pain
+in the past, so I figured it's worth mentioning.
+
+OCaml's build systems have evolved a lot over the years, and
+it has taken some time to converge upon a robust and
+efficient solution that works for most people. Thanks to the
+folks at Jane Street, who developed the Dune build system,
+OCaml now has a really nice and consistent story w.r.t
+building.
+
+Simply write a dune file, which uses a pretty uncontroversial
+and simple s-expression-based syntax to describe your project
+and its dependencies, and voila, your project can be built
+with minimal fuss~
+#+begin_src dune
+(library
+   (name lib)
+   (deps ...))
+#+end_src
+
+...that is assuming you're not straying too far from the "happy path".
+
+That is, dune works well for most OCaml projects, but, as a
+self-titled "opinionated build manager", deliberately
+provides a restricted set of possible build actions --- if
+you want to do things like generating text as part of your
+build and so on and so forth, you'll very quickly find
+yourself running into walls.
+
+Dune supports a number of extensions beyond pure OCaml, such
+as supporting Ctype-based projects with FFI, and C builds,
+and even some Rocq build support, but these extensions are
+all driven mostly by what Jane Street wants or uses, and
+straying too far from the beaten path will lead to pain.
+
+*** Comparison to Lean
+
+A comparison to Lean isn't entirely fair here, as Lean, given
+its age is still figuring out the exact build process it
+wants to use, and not to mention, it doesn't quite have as
+robust a story for package management as OCaml does (I run
+into a lot of problems where using wrong versions can cause
+unrelated packages to fail to build).
+
+That being said, I still wanted to take a second to point out
+a little thing that I thought was really cool:
+
+#+begin_quote
+*Lean's Lake build files are written in Lean itself!*
+#+end_quote
+
+So, this might not be the case forever, it seems like there's
+a push to move towards TOML files (at least from reading the
+documentation recently), but at the time of writing, one
+format for the build description of Lean projects is simply
+as a Lean file that imports a build DSL:
+#+begin_src lean4
+import Lake
+
+open Lean Lake DSL
+
+require mathlib from git
+  "https://github.com/leanprover-community/mathlib4.git"
+
+require betterfind from "./BetterFind"
+
+package probability where
+
+lean_lib BallsInBins where
+#+end_src
+
+Naturally, because Lakefiles are simply Lean code itself, and
+thanks to the extensibility of the metaprogramming facilities
+in Lean, this offers an amazing deal of flexibility in
+constructing your own extensions to the build process, and
+I've even managed to single-handedly over a weekend recreate
+several features I've needed from Dune such as a restricted
+equivalent of OCaml's ctypes and ctypes-build support, or
+even use it to [[https://github.com/kiranandcode/LeanTeX][generate LaTeX pdfs]]. 
+
+** Conclusion
+With that I've reached the end of the biggest pain-points
+I've had with OCaml over my time with it. Hopefully, it's
+given you an alternative perspective on the language and some
+of its features that you might not like.
+
+I think an arguable caveat to all of these criticisms is that
+in some sense, they're only a problem if you're a
+solo-developer --- the WYSIWY nature of the language, the
+restrictive metaprogramming support, the constrained build
+system and runtime representations are all features that, if
+you're a company looking for stable and consistent code, are
+arguably positives.  This would certainly explain the
+popularity of OCaml in companies like Jane Street and Ahrefs,
+where unexciting and boring code is a distinct positive
+(no-one wants to be the one to explain why you just lost a
+bajillion dollars because your macro had a typo).
+
+That being said, if you're a developer who wants to exploit
+the multiplicative factor of a truly flexible and extensible
+programming language with state of the art features from the
+cutting-edge of PL research, then maybe give Lean a whirl!
+
+Plus, as an extra benefit, you might even end up contributing
+to state of the art mathematics research~
+
+* Footnotes
+
+[fn:6] The parser is so easy to extend that I have some
+projects where I've literally embedded the grammar of another
+language into Lean itself, such as with my [[https://github.com/kiranandcode/cleango/blob/main/Clingo/Lang.lean][Lean bindings to
+the Clingo answer set programming language]].
+
+#+begin_src lean4
+declare_syntax_cat clingo_symbol
+
+syntax "#inf" : clingo_symbol
+syntax "#sup" : clingo_symbol
+syntax num : clingo_symbol
+syntax str : clingo_symbol
+syntax ident : clingo_symbol
+
+declare_syntax_cat clingo_term
+-- symbol
+syntax (name := clingo_term_symbolic) clingo_symbol : clingo_term
+-- unary operators
+syntax "-" clingo_term : clingo_term
+syntax "~" clingo_term : clingo_term
+syntax "|" clingo_term "|" : clingo_term
+-- binary operators
+syntax:10 clingo_term:10 " ^ " clingo_term:11 : clingo_term
+syntax:20 clingo_term:20 " ? " clingo_term:21 : clingo_term
+syntax:30 clingo_term:30 " & " clingo_term:31 : clingo_term
+syntax:40 clingo_term:40 " + " clingo_term:41 : clingo_term
+syntax:50 clingo_term:50 " - " clingo_term:51 : clingo_term
+syntax:60 clingo_term:60 " * " clingo_term:61 : clingo_term
+syntax:70 clingo_term:70 " / " clingo_term:71 : clingo_term
+syntax:80 clingo_term:80 " \\\\ " clingo_term:81 : clingo_term
+syntax:90 clingo_term:90 " ** " clingo_term:91 : clingo_term
+#+end_src
+
+[fn:5] Believe it or not, this was me being a bit
+restrained. If we were /really/ code-golfing, I might have gone with:
+
+#+begin_src ocaml
+let incr_sum ls =
+  let open Fun in
+  let update =
+    curry
+      Pair.((fold (flip (map_same2 (+)) % (flip make 1))
+        &&& fold (snd_map % (+))) % swap) in
+  List.fold_map update (0,0) ls
+  |> Pair.swap % Pair.map_fst fst
+#+end_src
+Beautiful.
+
+[fn:4] The Flambda mode improves things a bit, but still is
+extremely conservative in what gets optimised.
+
+[fn:3] It's an especially interesting language because it's
+both a dependently typed theorem prover /and/ a practical and
+usable functional language, more than capable of rivaling
+OCaml in day to day use.
+
+[fn:1] It happened to coincide with /physically/ transitioning my sex
+too haha~
+
+[fn:2] It's not critical to the main points in this article, but if
+you're interested, my credentials to the OCaml community include:
+
+- Author of the [[file:log-ways-of-sql-in-ocaml.org][first type-safe embedded SQL]] library for OCaml,
+  [[https://github.com/kiranandcode/petrol][Petrol]]
+
+- Developing the first [[file:log-writing-activitypub.org][federating Activitypub server]] in OCaml, [[https://github.com/kiranandcode/ocamlot][OCamlot]]
+
+- Building the first structural-editing plugin for OCaml,
+  [[https://github.com/kiranandcode/gopcaml-mode][Gopcaml-mode]], years before tree-sitter was even conceived, with
+  several features that still surpass the state of the art in other
+  comparable tools.
+
+- Authoring state-of-the-art [[https://www.comp.nus.edu.sg/news/2023-acm-sigplan-isergey/][award winning]] research prototypes with
+  40,000 LOCs mostly myself in OCaml, [[https://github.com/verse-lab/sisyphus][Sisysphus]].
+
+- Minor brag, [[https://discuss.ocaml.org/t/writing-type-inference-algorithms-in-ocaml/8191/17?u=gopiandcode][correcting a mistake]] in one of the most widely
+  referenced texts on [[https://okmij.org/ftp/ML/generalization.html][OCaml's type-checker]].
+
+- I'm also a trans-girl in CS, so you can somewhat assume I'm
+  pretty cracked.

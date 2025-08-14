@@ -23,6 +23,22 @@ mathematical proofs about the software correctness---and covers a
 broad range of techniques, such as proof repair, invariant inference
 or automated verification. See my [[file:docs/research.pdf][research statement]].
 
+# @@html:<div style="position: relative; display: block;">@@
+#   @@html:<div style="position: absolute; top: 0; left: 0; transform: rotate(-45deg); color: var(--trans-pink-darker); margin-left:-20px; margin-top:-10px; font-weight: bold; font-size: 12px; animation: flash 2s infinite;">NEW</div>@@
+#   @@html:<p>@@
+#   I am *NO LONGER* on the *job market*, both for faculty and industry positions; please contact me if you think we'd be a good fit!
+#   @@html:</p>@@
+# @@html:</div>@@
+
+@@html:<style>
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+</style>@@
+
+@@html:</br>@@
+
 Notable highlights of my work include: producing the [[file:pdfs/ceramist-draft.pdf][first formally
 verified proof]] of the probabilistic properties of the [[https://en.wikipedia.org/wiki/Bloom_filter][Bloom Filter]];
 inventing [[file:pdfs/sisyphus-pldi23.pdf][proof-driven testing]], a novel technique that exploits
@@ -61,7 +77,7 @@ The latest copy of my CV can be found [[file:./docs/cv.pdf][here]].
   @@html:<br/>@@
   _Kiran Gopinathan_
 *** Conference Papers
-- Accelerating Automated Program Verifiers by Automatic Proof Localization - CAV 2025
+- Accelerating Automated Program Verifiers by Automatic Proof Localization - CAV 2025 [[[file:pdfs/axolocl-cav2025.pdf][pdf]], [[https://github.com/verse-lab/proof-hardening/][code]]]
   @@html:<br/>@@
   _Kiran Gopinathan_, Dionysios Spiliopoulos, Vikram Goyal, Peter Müller, Markus Püschel, Ilya Sergey
 - Sound and efficient generation of Data-Oriented exploits via programming language synthesis - USENIX 2025 [[[file:pdfs/doppler-usenix25.pdf][pdf]], [[https://github.com/verse-lab/doppler][code]]]
