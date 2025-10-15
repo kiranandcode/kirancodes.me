@@ -28,13 +28,16 @@
       ]},
   "Singapore": {
     "center": [1.3040417757847607, 103.81484697657723],
-    "zoom": 10,
+    "zoom": 15,
     "cafes": [
       {
         "name": "Cafe Melba",
         "notes": "This was the first cafe I ever went to with a dedicated desire to cafe hop. I had just come out of hospitalisation for a week from kidney stones. I had worked out I was trans last December, and was becoming really disallusioned with my life in the lab, so wanted to go and do something, anything social for a bit. I picked a random cafe on google maps, and travelled there and worked on the introduction for my PhD thesis. It was nice and calming and helped take my mind off how burnt out I felt, and how trapped I felt in Singapore.",
         "location": [1.3033562725891294, 103.88504597544237],
-        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ctoFhLZbs3DW/hPRawuLpEFX1rjWbMeBHY4c1ndFFdlDc86iWzari.jpg"],
+        "photos": [
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ctoFhLZbs3DW/hPRawuLpEFX1rjWbMeBHY4c1ndFFdlDc86iWzari.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ryW3t8PKJL5u/XG0Wmm1ZLfVt4svNdpRS4WW1LZsWJUOO0nVCuS8j.jpg"
+        ],
         "mapsLink": "https://maps.app.goo.gl/6setTJcMuzme159G6",
         "date": "2024/03/03"
       },
@@ -45,7 +48,126 @@
         "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/PIHzCaREUVnk/bpTx9uJAqmjnbbFqzxgHwuInGhdqgG3EZrweN9kY.jpg"],
         "mapsLink": "https://maps.app.goo.gl/iGDpUctjnFWK2ZGZ7",
         "date": "2024/03/07"
+      },
+      {
+        "name": "Cafe Kith (& Alchemist)",
+        "notes": "Third cafe I went to. This one was a little better. I vaguely remember being very productive in my writing here. I think at this point I was still hacking on the introduction. I was actually intending to go to the Alchemist cafe, but it was super popular and there wasn't anywhere to sit and write stuff indoors, so I didn't want to stay there.",
+        "location": [1.2915864545984568, 103.86014783511233],
+        "photos": [
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/90Ngv0Qn0yMF/OvOHsUChjMRbKtrTfNjJJI64S73WNmiKUrYnFyey.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/QNtfRo6rVKRW/U2oTQTW3bFE89VSyYZDuSBQSoqgrUlRZlErfBgnU.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/pQW2qHtdzpigj1Zz7",
+        "date": "2024/03/10"
+      },
+      {
+        "name": "The Book Cafe",
+        "notes": "Fourth cafe I went to. I think I was quite productive in this one. I believe by this point I was working on the first case study for my thesis. There was a woman who was holding a call at one point, but otherwise it was quite chill. The cafe also had certain seats that they reserved for non-laptop users. Very nice cosy vibes. The food was also very fancy, though pretty pricey.",
+        "location": [1.2911994909309217, 103.83895243104914],
+        "photos": [
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/8ROYDeFuu0FH/dmx6GCNQ37SP6UXMBxWHDfCg6ClyB2J4cEmECJjr.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/uMItQiDdFC2m/7AZr4AMXuIjHOL8DKWEAeQsn7W2XtfQhNQgHwMvN.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/uMItQiDdFC2m/7AZr4AMXuIjHOL8DKWEAeQsn7W2XtfQhNQgHwMvN.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/6JKq3xDDmYTC/UeitGo7GOit2yIZnkVmkWeLUclmaHu5EvL8vsCyX.jpg"
+        ],
+        "mapsLink": "https://maps.app.goo.gl/kyUcYTthNL2pBExd6",
+        "date": "2024/03/21"
+      },
+      {
+        "name": "Moon Rooftop Bar (& IKEA)",
+        "notes": "Does this one count? Not technically a cafe, but still notable. This was the first transfem meetup I went to, upon recommendation by the therapist I was seeing at the time (the only useful thing that a singaporean therapist has given me). Instantly I felt so much at home, it was so nice not being like seen as a guy, being surrounded by people who weren't looking at me in a certain way. It was mostly east asian, so I was still a minority, but it was nice. Anyway, we went thrifting and then at the end of the night we headed to this bar. The owner got angry at us. We didn't do anything, we weren't loud (This was a group of semi-closeted queer people in SG, we were trying to be as innocuous as possible). Anyway she said that it wasn't profitable for us to be there and not order drinks and only food, and then sent us out. There wasn't even that many people in the bar, it was pretty empty so we kinda felt like transphobia might have been the cause. A fun experience at least. Rare from my time in Singapore.",
+        "location": [1.2741502430002118, 103.8447557683597],
+        "photos": [
+          "https://pixelfed.social/storage/m/_v2/883783194836464168/0c2c69eb8-6377a8/hItXeDOHh7CD/fZwPITmVjEusiNFlpsfWy0g2wW2nVKul3IX2va25.jpg",
+          "https://pixelfed.social/storage/m/_v2/883783194836464168/0c2c69eb8-6377a8/GB7NdEqUaU5R/4nVhatFicWb2XtvkYorwoHdjHogr9jv9Wd1sgC2c.jpg",
+          "https://pixelfed.social/storage/m/_v2/883783194836464168/0c2c69eb8-6377a8/WQFIGqyyzLv8/Gqx3Zolaxziy9Cal4ofCuZEwGSf45YOIqr9h85KL.jpg"
+        ],
+        "mapsLink": "https://maps.app.goo.gl/YPkGENM32SXPNnPX8",
+        "date": "2024/03/22"
+      },
+      {
+        "name": "Meownistry of Meow",
+        "notes": "This was probably the last substantial cafe-hopping cafe trip I made while writing my thesis at least. I had been recommended this by a trans guy who I'd been on dates with. I think I pissed him off by recommending some youtube video essays, so he stopped sending me messages, but at the very least the recommendation was good. Very fun. This was a very productive day and I got a ton of my thesis done. I think working on the last chapter of my thesis. The cats were nice and would laze around. Apparently the cat who sat next to me and on my laptop doesn't usually warm up to strangers, so that made me feel nice. The place also had free hot chocolate refills which was amazing. It does smell a bit of cat pee though :(. Overall 10/10 definitely one of my more memorable cafe trips in Singapore. I definitely didn't feel as depressed at this point. I was also really close to finishing my thesis at this point and I had promised myself that I would start HRT after finishing my theisis and by the end of the month I had!",
+        "location": [1.3040323764658812, 103.8599119592003],
+        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/C28MR6cM99pz/KLqRoCSSEYyJJGlugZJYEaeCdV2P5kaYEkUEc9R5.jpg", "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/zfrROuXuxAqK/ldNIiDjXCQhDgTkIpzIIQLwykMU7npZy6he68vRx.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/7opXUa46qZaKd5j69",
+        "date": "2024/04/07"
       }
     ]
-  }
+  },
+      {
+        "name": "Greybox Coffee @ UE Square",
+        "notes": "Went to this place a few times, mostly after going for electrolysis treatments at a local electrolysis studio. Mostly a means of chilling and unwinding in between travelling back to the lab. I felt so lost and depressed. I hate singapore so much. It was killing me.",
+        "location": [1.2921209872052886, 103.84258778250106],
+        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/UZpNESQRAdkl/NMoOApb1pW1euA1fXbffJiEfZ2Ln7MjwsPEHhaUc.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/JumYW3ZJc6aNJXVe9",
+        "date": "2024/06/27"
+      },
+      {
+        "name": "FLOCK CAFE",
+        "notes": "Another cafe hopping find. At this point I had completed my thesis, so this was mostly for leisure. I sat there, worked on I think my webpage? or some basic experiments for my research -- at the time I was working on the proof localisation work, so it was mostly running things on the server so a lot of free time -- and then played some visual novels on the playstation vita. It was a pretty calm and fun time. I enjoyed it, though the walk to and from felt depressing. I was still feeling dead inside. I need to leave Singapore. My life was on hiatus.",
+        "location": [1.2835483419934353, 103.83022026737787],
+        "photos": [
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/F21k1ilmfhaK/IENbinwkfs4WDAckR1OuyiGYgR8lNcd6RpF3bbKj.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/8IaLMKoy93dj/7fvcMyVjGkycojJ8IdT46sDxpn0WfXntJdevzxHf.jpg"
+        ],
+        "mapsLink": "https://maps.app.goo.gl/YDGeisipwPhDVqrm8",
+        "date": "2024/07/23"
+      },
+      {
+        "name": "Common Man Coffee Roasters",
+        "notes": "I was struggling to find cafes to go to at this point. A lot of cafes in Singapore are really for the local aunties and uncles and are more like hawker stalls, and don't really have the vibe to work in for me (kinda run down). I picked this one on a whim and travelled there. Common Man Coffee Roasters is not an accurate name. It is very not for common man (or woman as in my case hehe), it was incredibly expensive. The food was nice at least though. I did some work on something there, though I've forgotten what exactly.",
+        "location": [1.280282997695061, 103.84795742809494],
+        "photos": ["https://maps.app.goo.gl/LKJrAZ3fSZF2ZwNr8"],
+        "mapsLink": "https://maps.app.goo.gl/LKJrAZ3fSZF2ZwNr8",
+        "date": "2024/08/05"
+      },
+      {
+        "name": "The Coffee Code Singapore",
+        "notes": "This was the cafe I went to meet the trans guy who ghosted me (possibly because I upset him). Went back there for some coffee. If I'm being honest I'm not quite sure what I was doing here exactly. I think maybe waiting for a friend? not sure. I think I've been to this place a couple of times.",
+        "location": [1.279835270162656, 103.84296502329154],
+        "photos": ["https://pixelfed.social/storage/m/_v2/883783194836464168/0c2c69eb8-6377a8/oy1g2pD00bjC/aoeyCN1ZFIvyzq6MJsb1snGqfqG7fnfM2lyvvqqA.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/XB5x1VioavWLqFuX6",
+        "date": "2024/09/01"
+      },
+      {
+        "name": "STAR ANISE",
+        "notes": "Popped into this place for some food. I think it was an evening. I had spent it in my tiny room (thanks to racist singaporean landlords only renting to east asians or white people). I was feeling depressed, lonely and without any support network (I had been disowned by this point already). I stopped here and had some food. It was good.",
+        "location": [1.2830195961587425, 103.81678349999078],
+        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/mvbmTVdqWsxf/vlpflHtuqZaaNwp0oJd3NkeszDeGoa6TkPDmH8tx.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/M7LEcm6LAzWxwXUPA",
+        "date": "2024/09/04"
+      },
+      {
+        "name": "Takagi Coffee 100AM",
+        "notes": "Stopped by this place while shopping. I think I wanted to be outside (again, my apt in singapore was tiny and utterly depressing and a daily reminder of the repeated racial discrimination I faced there). I stopped by this place. Just wanted to try it out. I knew it was expensive but as a treat. The food was good. To be honest, the pancakes are what I remember most!",
+        "location": [1.2745804627580888, 103.84352197877634],
+        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ilgdO0Rc1QX2/Q39VhTZRasvPD4vXrJnsZG0nPP8YcFCl69ZbPLki.jpg","https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/QckiGfZxbxU4/J80fWeWMWdMFSUCoE6faLNLYxL8Vv5NpM34fp9Bd.jpg", "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/qPR0PbjmSMER/G0hWYLTyCQhDuT1uFyPERjdwmtGgeXZd8T7kVF6w.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/cQgraMcfeeNM4NBJ9",
+        "date": "2024/09/25"
+      },
+      {
+        "name": "the RITUAL",
+        "notes": "this was definitely one of the hidden gems of Singapore. At this point I had already had my US visa application approval (after three months of delays, not by the US admin but by UIUC's terrible garbage admin team where the main liason for my case went on leave but did not delegate my case, and so I just had an absolute hell of a time as I had to keep on extending my rental contract on a monthly basis). The place was amazing. Really great vibes for working. Loved it. I mainly was procrastinating while there and worked on a small game. It was pretty fun. I had a brownie on a whiim after my main meal, but it was too rich and I felt guilty afterwards and so forced myself to walk home to burn the excess calories.",
+        "location": [1.319600592068399, 103.82734746822644],
+        "photos": [
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ej7wA6LTNhjD/VFAQMA0BG5LtY7LlxGGtSRF5ruWetGKCu3e4TzuK.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/c0TGK75LYCC7/gMsr7GwepBPl3lnub5WGvs905TrjeteFrBXABmee.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/8Hhbe4OZoeu4/42D2gQ1UeS7pMHTw2LnxTK9UZHWBmeNakV5Uj8iD.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/1Wn37gU6Oa74/bI8XR2kjUReM8VGarTY9tDOSSMwOBLdumJe3Ax0C.jpg"
+        ],
+        "mapsLink": "https://maps.app.goo.gl/6p5x3xS1ZhPfyQy5A",
+        "date": "2024/11/30"
+      },
+      {
+        "name": "Foreword Coffee",
+        "notes": "Probably the last cafe I really went to in Singapore before leaving. I had some stuff to buy for my trip to move everything to the US, and so went to one of the plaza's I hadn't been to before. This was very close to me leaving so it was a bit anxious and I had some energy about myself. Not as sad or upset as any of my prior cafe hops.",
+        "location": [1.3065220114741265, 103.7889659468426],
+        "photos": [
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/IvxH49rvx4LR/kHzSllaLWMoYj9UE93OosDyxtG2ePzZm9XdwFey1.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/QVZYs2z2ECb6/4JwFuAin9CrPzX2V9QsGLXmgRd1erCD82dzrbZwE.jpg",
+          "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/TfP5liw2xf47/z1hWKvxe5uQ9VvWUpdS85bRchsW5ya8F0hkQwMjQ.jpg"
+        ],
+        "mapsLink": "https://maps.app.goo.gl/i9T74NNjD8uxSuzj6",
+        "date": "2024/12/14"
+      }
  }
