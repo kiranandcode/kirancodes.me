@@ -25,5 +25,19 @@
           "photos": [],
           "date": "2025/10/13"
         }
-    ]}
+      ]},
+  "Singapore": {
+    "center": [1.3040417757847607, 103.81484697657723],
+    "zoom": 10,
+    "cafes": [
+      {
+        "name": "Cafe Melba",
+        "notes": "This was the first cafe I ever went to with a dedicated desire to cafe hop. I had just come out of hospitalisation for a week from kidney stones. I had worked out I was trans last December, and was becoming really disallusioned with my life in the lab, so wanted to go and do something, anything social for a bit. I picked a random cafe on google maps, and travelled there and worked on the introduction for my PhD thesis. It was nice and calming and helped take my mind off how burnt out I felt, and how trapped I felt in Singapore.",
+        "location": ["1.3033562725891294, 103.88504597544237"],
+        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ctoFhLZbs3DW/hPRawuLpEFX1rjWbMeBHY4c1ndFFdlDc86iWzari.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/6setTJcMuzme159G6",
+        "date": "2024/03/03"
+      }
+    ]
+  }
  }
