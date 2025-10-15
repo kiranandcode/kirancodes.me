@@ -1,5 +1,5 @@
 #+title: Kiran's Art work
-#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]] [[file:art.org][Artwork]] [[file:posts.org][Posts]]
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]] [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
 #+NAV_SECTION: Artwork
 #+HIDDEN: true
 

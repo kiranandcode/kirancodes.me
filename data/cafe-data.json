@@ -1,0 +1,29 @@
+{
+  "New York": {
+      "center": [40.714980437543446, -73.97793118143684],
+      "zoom": 10,
+      "cafes": [
+        {
+          "name": "Ninth street cafe",
+          "notes": "Working on some relaxing svelte dev!",
+          "location": [40.6796438734264, -73.98227532512246],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/EXbASUE7jqbo/DK9whxnvq4TlVfUxjyjYXDp47rOFQOjWGg0pEjN5.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/ZB9qgwmiPULnjjHu7",
+          "date": "2025/10/14"
+        },
+        {
+          "name": "Postmark Cafe",
+          "notes": "Had a brief chat with my new roommate before flying back to Champaign!",
+          "location": [40.671060340750486, -73.98519033034324],
+          "photos": ["https://bsky.app/profile/kirancodes.me/post/3lzuh7wjzes2z"],
+          "date": "2025/10/3"
+        },
+        {
+          "name": "Hungry Ghost Cafe",
+          "notes": "Had a pain au chocolate, it was really nice",
+          "location": [40.672208268842105, -73.98355175405567],
+          "photos": [],
+          "date": "2025/10/13"
+        }
+    ]}
+ }

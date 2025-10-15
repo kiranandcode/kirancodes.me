@@ -356,7 +356,7 @@ The function searches parent directories for .org files to build navigation link
 (defun org-publish-sitemap-custom (title list)
   (concat
    "#+TITLE: " title "\n"
-   "#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:posts.org][Posts]]\n"
+   "#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]\n"
    "#+NAV_SECTION: Posts\n\n"
    "* Kiran's Blog Posts\n"
    ":PROPERTIES:\n"
@@ -1195,7 +1195,7 @@ holding export options."
 
         ("static"
          :base-directory ,(html-dir)
-         :base-extension "pdf\\|png\\|gif\\|jpg\\|svg\\|jpeg\\|js\\|cs\\|ttf\\|css\\|ico\\|webp"
+         :base-extension "pdf\\|png\\|gif\\|jpg\\|svg\\|jpeg\\|js\\|json\\|cs\\|ttf\\|css\\|ico\\|webp"
          :recursive t
          :publishing-directory ,build-dir
          :publishing-function org-publish-attachment)

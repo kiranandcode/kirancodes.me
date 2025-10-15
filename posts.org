@@ -1,5 +1,5 @@
 #+TITLE: Kiran's Blog Posts
-#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:posts.org][Posts]]
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
 #+NAV_SECTION: Posts
 
 * Kiran's Blog Posts

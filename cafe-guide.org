@@ -1,0 +1,9 @@
+#+TITLE: Kiran's Blog Posts
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
+#+NAV_SECTION: Cafe Guide!
+#+HIDDEN: true
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" href="/js/cafehopper.css">
+#+HTML_HEAD_EXTRA: 
+
+@@html:<main class="body"><div id="app"></div></main>@@
+@@html:<script type="module" src="/js/cafehopper.js">@@

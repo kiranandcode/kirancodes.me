@@ -1,5 +1,5 @@
 #+title: Kiran's home page~ - To Proof Maintenance for all and beyond!!!
-#+NAV_SECTIONS: [[file:index.org][About Me]] [[*Publications][Publications]] [[file:art.org][Artwork]] [[file:posts.org][Posts]]
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[*Publications][Publications]] [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
 #+NAV_SECTION: About Me
 #+HIDDEN: true
 
