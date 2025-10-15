@@ -33,10 +33,18 @@
       {
         "name": "Cafe Melba",
         "notes": "This was the first cafe I ever went to with a dedicated desire to cafe hop. I had just come out of hospitalisation for a week from kidney stones. I had worked out I was trans last December, and was becoming really disallusioned with my life in the lab, so wanted to go and do something, anything social for a bit. I picked a random cafe on google maps, and travelled there and worked on the introduction for my PhD thesis. It was nice and calming and helped take my mind off how burnt out I felt, and how trapped I felt in Singapore.",
-        "location": ["1.3033562725891294, 103.88504597544237"],
+        "location": [1.3033562725891294, 103.88504597544237],
         "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ctoFhLZbs3DW/hPRawuLpEFX1rjWbMeBHY4c1ndFFdlDc86iWzari.jpg"],
         "mapsLink": "https://maps.app.goo.gl/6setTJcMuzme159G6",
         "date": "2024/03/03"
+      },
+      {
+        "name": "Louisa Coffee",
+        "notes": "Second cafe I went to. This one was less of a hit, the cafe looked nice, and was placed in a relatively nice location, it was somewhat overpriced and overly modest in its servings. I think this was primarily more of an outlet for business people to hold brief work chats. I worked a bit on my thesis there, but I remember feeling depressed and out of it. Life was hell back then. Oh, an update! turns out they've closed down lol. No big loss.",
+        "location": [1.2952272533134865, 103.85816166899453],
+        "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/PIHzCaREUVnk/bpTx9uJAqmjnbbFqzxgHwuInGhdqgG3EZrweN9kY.jpg"],
+        "mapsLink": "https://maps.app.goo.gl/iGDpUctjnFWK2ZGZ7",
+        "date": "2024/03/07"
       }
     ]
   }
