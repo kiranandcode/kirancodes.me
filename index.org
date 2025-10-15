@@ -11,14 +11,15 @@
 :END:
 @@html:<div class="grid-column-two-thirds body">@@
 
-Hi, I'm Kiran (she/her)! I am a Postdoctoral Researcher at the
-University of Illinois Urbana Champaign, advised by [[https://dependenttyp.es][Talia
-Ringer]]. Previously I completed my PhD from the National University of
-Singapore advised by [[https://ilyasergey.net/][Ilya Sergey]] in [[https://verse-lab.github.io][VERSE Lab]].
+Hi, I'm Kiran (she/her)! I am currently a Research Scientist working
+on AI. Previously I was a Postdoctoral Researcher at the University of
+Illinois Urbana Champaign, advised by [[https://dependenttyp.es][Talia Ringer]]. Before then, I
+completed my PhD from the National University of Singapore advised by
+[[https://ilyasergey.net/][Ilya Sergey]] in [[https://verse-lab.github.io][VERSE Lab]].
 
-My research focuses on the problem of proof maintenance: developing
-newer and better tools for the maintenance and automation of formal
-verification---the process of using computers to construct
+My academic research focused on the problem of proof maintenance:
+developing newer and better tools for the maintenance and automation
+of formal verification---the process of using computers to construct
 mathematical proofs about the software correctness---and covers a
 broad range of techniques, such as proof repair, invariant inference
 or automated verification. See my [[file:docs/research.pdf][research statement]].
