@@ -6,4 +6,4 @@
 #+HTML_HEAD_EXTRA: 
 
 @@html:<main class="body"><div id="app"></div></main>@@
-@@html:<script type="module" src="/js/cafehopper.js">@@
+@@html:<script type="module" src="/js/cafehopper.js" defer>@@
