@@ -4,31 +4,103 @@
       "zoom": 10,
       "cafes": [
         {
+          "name": "Variety Coffee",
+          "notes": "After the parkrun, and after lounging in bead, I got dressed up on a whim, but then didn't know where I should go out to show off. In the end, I took a brief detour to a nearby coffee place specifically because it stays open late (till 9??? woaw) and did some hacking on work stuff.",
+          "location": [40.66765419793101, -73.9811459163746],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/uwtcp9fMWvIl/4blDDBnwXtxGcCrVwFQ2AwlTXb3PlzCUyplGpOmZ.jpg", "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/nPrcnOYoPkhI/Nz2FxS4EAZuAAqxGG0fjnf7EUZPw6M3OVZ3UlNXg.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/GYDRtWiaJcPRiBeL6",
+          "date": "2025/10/18"
+        },
+        {
+          "name": "Breads Bakery",
+          "notes": "Managed to pull myself out of bed on a cold Saturday morning at 8am and went for the parkrun, but it turns out that parkruns in NYC start at 8am, not 9am. I ran the course irrespective but didn't record my time, and instead just got some coffee with some runners who were still around. The coffee was small but it was really good and the pastry was tasty.",
+          "location": [40.70285030292464, -73.995256489874],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/ldoxTXXR2Lps/Mx3TnF74cHqRfOcPnxA84NYWHUanjJUbc228buZ8.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/i82maRWz1xp4yMut7",
+          "date": "2025/10/18"
+        },
+        {
+          "name": "La Parisienne",
+          "notes": "Arrived a bit early to the office for my first day at work, so I went to a nearby cafe for food. This one was quite popular, there were so many people there even on 8am on a friday, but the food was great. I had a coffee and then an apple pastry.",
+          "location": [40.7095847904133, -74.00934437368782],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/yplYQoJ5Xq3T/OGVp3t6PgrjX5MmAdGZWBfmXmf3Bbuv3ETuhtuHN.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/sZ6Afvws7BaN7Hrg7",
+          "date": "2025/10/17"
+        },
+        {
+          "name": "Velvette Black",
+          "notes": "For whatever reason, ended up going to this cafe quite late in the day. It was a nice walk to get there, the streets really reminded me of Oxford and London. I really enjoy like architecture from that period of history. The cafe was nice. The barista was south asian and had nose piercings. Seemed a bit queer/nonbinary so that was nice. The hot chocolate was nice. Afterwards, I went to whole foods for groceries and picked up some tape at Staples.",
+          "location": [40.67422917236303, -73.97525448261928],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/yplYQoJ5Xq3T/OGVp3t6PgrjX5MmAdGZWBfmXmf3Bbuv3ETuhtuHN.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/oczNChVK2GmmBj5i8",
+          "date": "2025/10/16"
+        },
+        {
           "name": "Ninth street cafe",
-          "notes": "Working on some relaxing svelte dev!",
+          "notes": "This is where I implemented the bulk of this little widget on my home page!! It was a cold and windy day, the cafe was kind dark and cosy and very quiet. There was some guy practicing card tricks in the first seat I took, but this was next to an open window so I moved inside to this inner place. It was a cold day so it was a bit damp but I enjoyed the ambience while I coded.",
           "location": [40.6796438734264, -73.98227532512246],
           "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/EXbASUE7jqbo/DK9whxnvq4TlVfUxjyjYXDp47rOFQOjWGg0pEjN5.jpg"],
           "mapsLink": "https://maps.app.goo.gl/ZB9qgwmiPULnjjHu7",
           "date": "2025/10/14"
         },
         {
-          "name": "Postmark Cafe",
-          "notes": "Had a brief chat with my new roommate before flying back to Champaign!",
-          "location": [40.671060340750486, -73.98519033034324],
-          "photos": ["https://bsky.app/profile/kirancodes.me/post/3lzuh7wjzes2z"],
-          "date": "2025/10/3"
+          "name": "Hungry Ghost Cafe",
+          "notes": "Had a pain au chocolate, it was really nice. This was the first cafe I went to since moving to NYC. The first few days had been quite overcast and windy so I was feeling a but catfished to be honest, because when I had moved here first, it was sunny, but then now it was gloomy. Plus, my appartment had no furniture, so it really felt like I had no home, and I was struggling to keep my hopes up. I guess this little coding project helped to keep my mind occupied before work started.",
+          "location": [40.672208268842105, -73.98355175405567],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/0C1sxZULmzyJ/uGfojdSpZ2JMotYC5ycEjMgfjoZ9z78uoMNwZPuu.jpg", "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/VYBocEMQYyhd/DKbQiWK1Ym2ZYeeyqA20FlV7uGSUnJJM6sFoXEqJ.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/bJnDECgPo5mtXUuV6",
+          "date": "2025/10/13"
         },
         {
-          "name": "Hungry Ghost Cafe",
-          "notes": "Had a pain au chocolate, it was really nice",
-          "location": [40.672208268842105, -73.98355175405567],
-          "photos": [],
-          "date": "2025/10/13"
+          "name": "Felix Roasting Company",
+          "notes": "This is technically the first cafe that I cafe hopped in NYC! Before the start date at the company I was joining, they were holding a retreat in upstate NY, so I was flown out to NY a week before I joined. The day before leaving for the retreat, I wanted to do some cafe hopping and so I stopped by this place. The vibes were amazing, though the food was pricy. I just enjoyed my meal and took in the space. I love NYC.",
+          "location": [40.7263674236782, -74.00889251921427],
+          "photos": ["https://bsky.app/profile/kirancodes.me/post/3lzuh7wjzes2z", "https://bsky.app/profile/kirancodes.me/post/3lzuhf2juzc2z"],
+          "mapsLink": "https://maps.app.goo.gl/skRNs78ZRC42TKNM6",
+          "date": "2025/09/27"
+        },
+        {
+          "name": "Sawada coffee",
+          "notes": "This was the following day while waiting to carpool to the retreat at the company in upstate NY, I walked around and found this nice little spot. I had matcha. It was nice. It was also nice listening to the conversations of random strangers at the cafe, who were actively planning and building their careers. My ex-boyfriend from the midwest had no ambitious and was effectively a failson who was entirely dependent on his mother. I tried to get him to consider improving his career but he would just repeatedly show no effort and say it wasn't important to him. Yeah, because youi're a pathetic child who lives under their mother's thumb? like don't you have any respect for yourself?",
+          "location": [40.718116522207914, -74.0017849677846],
+          "photos": ["https://bsky.app/profile/kirancodes.me/post/3lzvs73fa6c2p"],
+          "mapsLink": "https://maps.app.goo.gl/TkPmEqHUqDJxpVRh9",
+          "date": "2025/09/28"
+        },
+        {
+          "name": "Coffee Project New York",
+          "notes": "This was immediately before carpooling, I had an hour delay so went to a nearby coffee shop and had a pain au choclate and a hot chocolate. It was nice. There was this place called big gay ice cream next to the coffee shop so it was nice to see like queer themes so openly present.",
+          "location": [40.7236980022887, -74.01056265940719],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/EiTIXl1aJMqF/205hhsnKo8QWvXD2mIfW6m5l7jmTYDXqUOvJ52XV.jpg", "https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/vBMuPEqYfCtn/bqo49UeaaLypenuaQwKMc44C5pLC6PsTzxvnzJzk.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/p4VXVDUq5zHh3n7V6",
+          "date": "2025/09/28"
+        },
+        {
+          "name": "Postmark Cafe",
+          "notes": "Had a brief chat with my new roommate before flying back to Champaign! This was after the retreat, so I had just gotten first hand experience of the projects that my company was working on and I was really excited because these were super cool projects that I was super excited to be working on. The last piece in the puzzle was to meet my roommate and do like a check that we got along IRL (I had spoken with her via the phone and we seemed to get along well but you can never be sure), and it went great!",
+          "location": [40.671060340750486, -73.98519033034324],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/1ktElwWSJMZZ/pmIPSNe3TBXTshJRtAIO7SpGqwQAnEYZ045w7Dbd.jpg"],
+          "date": "2025/10/04"
+        },
+        {
+          "name": "Polly's Cafe",
+          "notes": "Had to grab keys for the appt from my roommate who was working at the time in this nearby cafe shop. She gave me hot chocolate on the house, and after I went back to the appartment and checked it out for the first time! It was pretty nice and I'm really happy with it, everything worked out well!",
+          "location": [40.67352650603759, -73.96079785801867],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/IwzmbtVMBGbk/oA7Eotunijk6NT0LMQcj1gT7kJUZtvDoGOqwhuvM.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/ZTQqATLnLJEULA5R6",
+          "date": "2025/10/04"
+        },
+        {
+          "name": "Blue Bottle Coffee",
+          "notes": "While moving my stuff from the storage locker to the appartment, I took a brief stop at this coffee shop to have a snack.",
+          "location": [40.71848632107718, -74.00245223864412],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/5IEZMHjcv5qm/2Inul85g1xTBkyfR4FjEuCBV3iNxNmhVz2nkYKk9.jpg"],
+          "date": "2025/10/04"
         }
       ]},
   "Singapore": {
     "center": [1.3040417757847607, 103.81484697657723],
-    "zoom": 15,
+    "zoom": 11,
     "cafes": [
       {
         "name": "Cafe Melba",
