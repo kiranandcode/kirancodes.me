@@ -4,6 +4,54 @@
       "zoom": 10,
       "cafes": [
         {
+          "name": "Pulse Coffee",
+          "notes": "Met up with a friend introduced to me from a grad student I had met with. She was fun to hang out with, we walked around a chatted about research, queer spaces and stuff. Walked across the Brooklyn Bridge and into Fidi. A fun Sunday evening though I probably should have been making progress on reviewing!",
+          "location": [40.66795319114647, -73.98703833726206],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/KJIHQ7svjZRn/aCjtOxGjqEG5cINhi3sRoxZMriCiZ7HobLVvSZLW.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/9siGY6TaWppy9x8Z9",
+          "date": "2025/10/26"
+        },
+        {
+          "name": "Ateaz Cafe",
+          "notes": "Exploring for more cafes, found this one near the station I get off before work. Got a hot chocolate and a cookie. It was super expensive wow they don't hold back huh? but tbf the cookie was really high quality.",
+          "location": [40.70727186283921, -74.01373685375714],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/LRXBMR1smR8q/DtIa7q9BEyYnMLBtebkGzwFmHkYE7m6cwixjuijF.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/BgKaLTx11Hqn8QEc6",
+          "date": "2025/10/24"
+        },
+        {
+          "name": "Siena Bakehouse",
+          "notes": "Very fancy artisianal coffeeshop near my work. Bought a croissant from there and it was pretty nice. Not much life stuff to report otherwise. Was just a nice morning cafe to stop by.",
+          "location": [40.70807021832647, -74.01372886690417],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/TFzz8YdjuPJa/TE2wLpt3eozg9vJqRe4P6ukBsm2HINxLVTnOGr2D.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/CEo6vjvHjMmTbeqd6",
+          "date": "2025/10/22"
+        },
+        {
+          "name": "Hungry Ghost Coffee",
+          "notes": "Heading home after work and wanted to go to some makeup stores to buy more makeup, but wasn't sure how to navigate the westfield shopping center and in the end just wandered around FiDi aimlessly.",
+          "location": [40.715306198719276, -74.00746575272096],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/Thedsi4HsT2Q/MQ2f0yR5T5t1qdf66N83MQK2xhydGaU1saNQLMpY.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/4AsCKX9navZ4xrQb9",
+          "date": "2025/10/21"
+        },
+        {
+          "name": "The Green Room",
+          "notes": "First proper day of my first proper work week. Spent the day busy hacking away on my work till 6. At that time realised I didn't want to go home and lounge there so picked a random meetup on vibe coding and walked there. On the walk found this cafe shop for an evening mini-meal and had a matcha and a cookie and it was pretty nice.",
+          "location": [40.72244289808556, -73.99723217157181],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/agqX9jijSsc8/NgE5rjCjKrEwKcXzP3hoc5U93PlFWHIIHqMHys74.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/Ln2DuxoGo66zGg3C9",
+          "date": "2025/10/20"
+        },
+        {
+          "name": "Derby Cup Coffee",
+          "notes": "First time heading in to manhatten to hang out for the day. Went to a book signing on the future of hacking, the author was nice, and at the shop found this amazing coat. I spent the whole day walking around, I got lost a few times but managed to check out of Manhatten Mini Storage at 6 and before heading home, went to this cafe. It was pretty okay, the cafe was kinda dingy, would not recommend working from there.",
+          "location": [40.71682495879642, -73.9969409521498],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/0c2c69eb8-6377a8/v8XKzRsQjJGi/9TMwIOt0dISrjzzO1zgIlxLpQ7nr4EU6nqdk1sDW.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/YRST2AETLZ8JGZpK9",
+          "date": "2025/10/19"
+        },
+        {
           "name": "Variety Coffee",
           "notes": "After the parkrun, and after lounging in bead, I got dressed up on a whim, but then didn't know where I should go out to show off. In the end, I took a brief detour to a nearby coffee place specifically because it stays open late (till 9??? woaw) and did some hacking on work stuff.",
           "location": [40.66765419793101, -73.9811459163746],
