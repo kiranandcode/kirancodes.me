@@ -917,8 +917,10 @@ the plist used as a communication channel."
 				  info nil #'org-html-standalone-image-p))
 			 " </span>"
 			 raw))))
-	    (label (org-html--reference paragraph info)))
-	(org-html--wrap-image contents info caption label)))
+	    (label (or (org-element-property :CUSTOM_ID paragraph)
+		    (org-export-get-reference paragraph info))))
+	(org-html--wrap-image contents info caption  ;; label
+                              )))
      ;; if a quoted html snippet, don't wrap in p, might break structure
      ((org-html-is-quoted-snippet paragraph)
       contents)
@@ -959,6 +961,26 @@ contextual information."
 	      (format "<pre class=\"src src-%s lang-%s\"%s><code>%s</code></pre>"
                       ;; Lang being nil is OK.
                       lang lang label code)))))
+;;;;; Example 
+(defun org-html-example-block (example-block _contents info)
+  "Transcode a EXAMPLE-BLOCK element from Org to HTML.
+CONTENTS is nil.  INFO is a plist holding contextual
+information."
+  (let ((attributes (org-export-read-attribute :attr_html example-block)))
+    (if (plist-get attributes :textarea)
+	(org-html--textarea-block example-block)
+      (if-let* ((class-val (plist-get attributes :class)))
+          (setq attributes (plist-put attributes :class (concat "example " class-val)))
+        (setq attributes (plist-put attributes :class "example")))
+      (format "<pre%s>\n%s</pre>"
+	      (let* ((reference nil;; (org-html--reference example-block info)
+                                )
+		     (a (org-html--make-attribute-string
+			 (if (or (not reference) (plist-member attributes :id))
+			     attributes
+			   (plist-put attributes :id reference)))))
+		(if (org-string-nw-p a) (concat " " a) ""))
+	      (org-html-format-code example-block info)))))
 ;;;;; Section
 (defun org-html-section (section contents info)
   "Transcode a SECTION element from Org to HTML.

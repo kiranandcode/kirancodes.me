@@ -6,6 +6,7 @@
 :PROPERTIES:
 :subtitle: My Ramblings on Life, Software, Games and Everything
 :END:
+- [[file:posts/log-sins-of-c.org][18 Nov, 2025 - Humanity is stained by the sins of C and no LLM can rewrite them away to Rust]]
 - [[file:posts/log-ocaml-to-lean.org][13 Aug, 2025 - Why Lean 4 replaced OCaml as my Primary Language]]
 - [[file:posts/log-lang-design-llms.org][17 Jun, 2025 - Programming Language Design in the Era of LLMs: A Return to Mediocrity?]]
 - [[file:posts/log-proof-localisation.org][05 Jun, 2025 - The Looming Problem of Slow & Brittle Proofs in SMT Verification (and a Step Toward Solving It)]]
