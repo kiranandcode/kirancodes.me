@@ -4,6 +4,30 @@
       "zoom": 10,
       "cafes": [
         {
+          "name": "Luckin Coffee",
+          "notes": "One of the postdocs from UIUC's boyfriend was visiting. We went to the parkrun together, and afterwards went to a cafe before his train back. He recommended Luckin Coffee which is apparently like a Starbucks-level brand in China, but only available in specific locations in the US, and he wanted to have a coffee there. I had matcha. It was okay.",
+          "location": [40.709654090320825, -74.00679355212444],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/c19ce1b25-2f8843/EEvDkWzSLHE4/rXm04fx6XnSM214TeIRvoXAXwsOC7NPoifFZEwqv.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/NpQjJzN3kFagbtSX7",
+          "date": "2025/11/08"
+        },
+        {
+          "name": "The Center for Fiction Cafe",
+          "notes": "I can't remember what was going on. Felt kinda bad probably. Walked and found this cafe. It's pretty chill and nice. The barista complimented me on my Naruto tshirt. Maybe he was flirting with me? I really don't know how to respond to those kinds of interactions.",
+          "location": [40.68694218963343, -73.97853225425861],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/c19ce1b25-2f8843/ScQj95srGMZy/oWiiZl1sfPBAj8syOVAWPPiW0PMlnqfc0U2Qz9xA.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/spYTHtbdVqTK8Ycw9",
+          "date": "2025/11/02"
+        },        
+        {
+          "name": "Art Collective Cafe",
+          "notes": "While waiting for my laundry to be done, saw this cafe on google maps, seemed really cool and radical. They have a no-tipping policy because they want to make sure their waiters are paid well.",
+          "location": [40.67424163793868, -73.97546995840217],
+          "photos": ["https://pxscdn.com/public/m/_v2/883783194836464168/c19ce1b25-2f8843/oi5TCccWUpjv/UbcKGWAnoy8qTA72trCmi0ZWKPm4pHc6B8FUx42r.jpg"],
+          "mapsLink": "https://maps.app.goo.gl/P5RsxsSigx9bSCm88",
+          "date": "2025/11/01"
+        },
+        {
           "name": "Pulse Coffee",
           "notes": "Met up with a friend introduced to me from a grad student I had met with. She was fun to hang out with, we walked around a chatted about research, queer spaces and stuff. Walked across the Brooklyn Bridge and into Fidi. A fun Sunday evening though I probably should have been making progress on reviewing!",
           "location": [40.66795319114647, -73.98703833726206],
