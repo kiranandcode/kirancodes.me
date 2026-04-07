@@ -29,7 +29,7 @@ refrain is best summarised as the quote:
 @@html:<b>@@"The best solution to agentic coordination is to just wait a few months." @@html:</b>@@
 #+end_quote
 
-The argument roughly summaries to something like:
+The argument roughly summarises to something like:
 
 1. Current multi-agentic LLM systems are unable to build large-scale software
    autonomously (/agreed ✅/).
@@ -39,7 +39,7 @@ The argument roughly summaries to something like:
 
 The main implication is that building languages and tooling to
 describe and manage these systems is a sisyphean task; newer models
-will inevitably render them obselete, and the entire effort will be in
+will inevitably render them obsolete, and the entire effort will be in
 vain.
 
 As a verification researcher I find this capitulation a little
@@ -94,13 +94,13 @@ This in other words, is nothing other than one big distributed consensus problem
 
 @@html:<br/>@@
 
-In other words, the users prompt $P$ first gets sent split, via a
-plan, into tasks for several agents $a_1, \cdots a_n$. Then, these
+In other words, the user's prompt $P$ first gets sent split, via a
+plan, into tasks for several agents $a_1, \cdots, a_n$. Then, these
 agents work in parallel to implement their respective coding tasks
 $\phi_1, \cdots, \phi_n$, and by the end, if the synthesis was
-successful, we're hoping, that the final generated software system
+successful, we're hoping that the final generated software system
 $\phi$ composed of each of the individual constructions $\phi :=
-\phi_1 || \cdots || \phi_n$, satisfies the users request.
+\phi_1 || \cdots || \phi_n$, satisfies the user's request.
 
 This is inherently a consensus problem as the agents $a_1,\cdots,a_n$
 must work concurrently to produce their software artefacts
@@ -108,7 +108,7 @@ $\phi_1,\cdots,\phi_n$, but communicate and agree enough that the
 final piece of software $\phi_1 || \cdots || \phi_n$ is well formed
 and satisfies the request. Design decisions or choices in one $\phi_i$
 will result in constraints that affect and influence the possible
-choices of $\phi_i$ for other agents. For example, if the agent in
+choices of $\phi_j$ for other agents. For example, if the agent in
 charge of implementing network connections $a_{\text{network}}$
 chooses a library with a callback-style async API for requests, then
 whichever agent is responsible for the overall integration
@@ -138,7 +138,7 @@ rebuttals.
    the scope of this post, but as soon as we have made that decision
    and we have multiple agents working on our tasks, then the problem
    is inherently concurrent (irrespective of whether they're working
-   in parallel, or interleaved on single thread), and we
+   in parallel, or interleaved on a single thread), and we
    have to solve problems of coordination.
 
 3. *Can't we have a single supervisor to dictate choices?* Why not
@@ -174,13 +174,13 @@ distributed systems and try and sketch out some impossibility results.
 *** FLP for multi-agentic systems (Safety, Liveness, Fault Tolerance, pick two)
 
 Of course, where else could we start but with FLP, oh my dear
-FLP. Fisher, Lynch and Paterson's seminal paper [[https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf]["Impossibility of
+FLP. Fischer, Lynch and Paterson's seminal paper [[https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf]["Impossibility of
 Distributed Consensus with One Faulty Process"]] establishes a
 fundamental impossibility result dictating consensus in any asynchronous
 distributed system (yes! that includes us).
 
 #+begin_quote
-*FLP Theorem (Fischer & et al., 1985):* In /any/ distributed system with arbitrary delays on
+*FLP Theorem (Fischer et al., 1985):* In /any/ distributed system with arbitrary delays on
  messages and the possibility of at least 1 node crash failure, no
  deterministic protocol can ensure all non-faulty nodes reach
  consensus in bounded time.
@@ -207,7 +207,7 @@ messages, crash failure) do apply to our protocol:
    dying, but could also be something like the agent running a tool
    which never terminates (i.e. a bash script with an accidental loop
    etc.). Other times they might just =pkill= themselves. Overall,
-   agents may crash unnanounced.
+   agents may crash unannounced.
 
 Now, what does that mean for us? in particular, it means that in any
 multi-agentic system, irrespective of how smart the agents are, they
@@ -218,7 +218,7 @@ will never be able to guarantee that they are able to do both at the same time:
 You may be surprised at the liveness part of this, as agents always
 seem to make progress and terminate in most workflows, but this
 doesn't mean that they reach consensus --- in fact, a very common
-pattern that I see is a sort of looping on going back and forth on
+pattern that I see is a sort of looping, going back and forth on
 design decisions where one agent picks one design decision, another
 one reverts the change, picks another decision, and then they loop.
 
@@ -238,7 +238,7 @@ necessarily always the case[fn:1]), then =ps= might give us something like
 that. One takeaway from this thus might be to give LLMs a tool
 to check the liveness of other agents.
 
-*** The Byzantine Generals Problem for Mutli-Agentic Software Development
+*** The Byzantine Generals Problem for Multi-Agentic Software Development
 
 The second impossibility result I'd like to sketch a connection to is
 a little more subtle, but still useful to think about: Lamport's [[https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/The-Byzantine-Generals-Problem.pdf]["The
@@ -291,24 +291,16 @@ inherently underspecified, and agents thus may always have
 misinterpretations. One actionable takeaway from this analysis is that
 while we can't improve the amount of misinterpretations $f$ we can
 tolerate, we can increase the likelihood of success by adopting
-techniques to /reducing/ the number of misinterpretations --- in
+techniques for /reducing/ the number of misinterpretations --- in
 particular, external validation mechanisms such as tests, static
 analysis and verification effectively convert misinterpretations into
 crash failures --- instead of proceeding with a misinterpretation of
-the natural langauge description, the agent can crash, or refine it's
+the natural language description, the agent can crash, or refine its
 interpretation to match the tests, from which we can reuse the weaker
 FLP results.
 
 ** Further reading
-In this blog post, I've presented a high level formal model for
-agentic software development and then used to to draw links to a
-couple of the most important impossibility results from the
-distributed systems literature, FLP and Byzantine Generals.  Hopefully
-through this narrative I've managed to help motivate how building
-these links can help us establish strong constraints on what agents
-will and won't be able to do as model capabilities improve.
-
-As we conclude, I'd like to leave a few pointers to some other key
+Beyond FLP and Byzantine Generals, there are a few other key
 distributed systems results that might be worth thinking about in the
 context of multi-agentic software development, but for which the
 precise links have been left as an exercise for the reader :) :
@@ -325,14 +317,14 @@ precise links have been left as an exercise for the reader :) :
   systems, devices do not wait indefinitely for messages to arrive,
   and will timeout and request resends. With this simplification,
   consensus becomes solvable at a cost of increased message
-  complexixty.
+  complexity.
 
 - *CAP Theorem (Gilbert & Lynch, 2002)* --- Of course, any post on
   "pop" distributed systems would not be complete without reference to
   the lauded CAP theorem! CAP, like FLP, provides an impossibility
   result which states that any distributed system must choose between
   at most two of Consistency (agents have consensus on their internal
-  views), Availiability (agents are able to service requests
+  views), Availability (agents are able to service requests
   eventually) and Partition tolerance (agents can still make progress
   even if some part of the network is inaccessible).[fn:2]
 
