@@ -8,6 +8,7 @@
 (require 'modus-themes)
 (load-theme 'modus-operandi t t)
 
+(setq org-export-with-broken-links t)
 ;;;;; Inline js 
 
 (add-to-list 'org-src-lang-modes '("inline-js" . javascript)) ;; js2 if you're fancy
@@ -356,7 +357,7 @@ The function searches parent directories for .org files to build navigation link
 (defun org-publish-sitemap-custom (title list)
   (concat
    "#+TITLE: " title "\n"
-   "#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]\n"
+   "#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]   [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]\n"
    "#+NAV_SECTION: Posts\n\n"
    "* Kiran's Blog Posts\n"
    ":PROPERTIES:\n"

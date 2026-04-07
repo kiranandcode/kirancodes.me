@@ -1,5 +1,5 @@
 #+title: Kiran's home page~ - To Proof Maintenance for all and beyond!!!
-#+NAV_SECTIONS: [[file:index.org][About Me]] [[*Publications][Publications]] [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[*Publications][Publications]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
 #+NAV_SECTION: About Me
 #+HIDDEN: true
 
@@ -12,10 +12,11 @@
 @@html:<div class="grid-column-two-thirds body">@@
 
 Hi, I'm Kiran (she/her)! I am currently a Research Scientist working
-on AI. Previously I was a Postdoctoral Researcher at the University of
-Illinois Urbana Champaign, advised by [[https://dependenttyp.es][Talia Ringer]]. Before then, I
-completed my PhD from the National University of Singapore advised by
-[[https://ilyasergey.net/][Ilya Sergey]] in [[https://verse-lab.github.io][VERSE Lab]].
+on AI+PL at the [[https://basis.ai][Basis Research Institute]]. Previously I was a
+Postdoctoral Researcher at the University of Illinois Urbana
+Champaign, advised by [[https://dependenttyp.es][Talia Ringer]]. Before then, I completed my PhD
+from the National University of Singapore advised by [[https://ilyasergey.net/][Ilya Sergey]] in
+[[https://verse-lab.github.io][VERSE Lab]].
 
 My academic research focused on the problem of proof maintenance:
 developing newer and better tools for the maintenance and automation

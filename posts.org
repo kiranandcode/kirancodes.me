@@ -1,11 +1,12 @@
 #+TITLE: Kiran's Blog Posts
-#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]  [[file:art.org][Artwork]] [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
+#+NAV_SECTIONS: [[file:index.org][About Me]] [[file:index.org::*Publications][Publications]]   [[file:cafe-guide.org][Cafe Guide!]] [[file:posts.org][Posts]]
 #+NAV_SECTION: Posts
 
 * Kiran's Blog Posts
 :PROPERTIES:
 :subtitle: My Ramblings on Life, Software, Games and Everything
 :END:
+- [[file:posts/log-distributed-llms.org][06 Apr, 2026 - Multi-agentic Software Development is a Distributed Systems Problem (AGI can't save you from it)]]
 - [[file:posts/log-sins-of-c.org][18 Nov, 2025 - Humanity is stained by the sins of C and no LLM can rewrite them away to Rust]]
 - [[file:posts/log-ocaml-to-lean.org][13 Aug, 2025 - Why Lean 4 replaced OCaml as my Primary Language]]
 - [[file:posts/log-lang-design-llms.org][17 Jun, 2025 - Programming Language Design in the Era of LLMs: A Return to Mediocrity?]]
