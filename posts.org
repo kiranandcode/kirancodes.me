@@ -6,6 +6,7 @@
 :PROPERTIES:
 :subtitle: My Ramblings on Life, Software, Games and Everything
 :END:
+- [[file:posts/log-who-watches-the-watchers.org][13 Apr, 2026 - Lean proved this program was correct; then I found a bug.]]
 - [[file:posts/log-distributed-llms.org][06 Apr, 2026 - Multi-agentic Software Development is a Distributed Systems Problem (AGI can't save you from it)]]
 - [[file:posts/log-sins-of-c.org][18 Nov, 2025 - Humanity is stained by the sins of C and no LLM can rewrite them away to Rust]]
 - [[file:posts/log-ocaml-to-lean.org][13 Aug, 2025 - Why Lean 4 replaced OCaml as my Primary Language]]
