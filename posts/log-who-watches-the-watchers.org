@@ -179,7 +179,7 @@ Edit: there is a [[https://github.com/leanprover/lean4/pull/13392][pending PR]] 
 AFL also found a denial-of-service in lean-zip's own code. The
 =readExact= function in =Archive.lean= passes the =compressedSize=
 field from the ZIP central directory straight to =h.read= without
-validating it against the actual file size:
+validating it against the actual file size ([[https://github.com/kim-em/lean-zip/blob/78e5bd6950afdda3ab88dbd567e54bc6adedf3ae/Zip/Archive.lean#L341][here]]):
 
 #+begin_src lean4
   def readExact (h : IO.FS.Handle) (n : Nat) ... := do
@@ -251,7 +251,6 @@ questions you think to ask and the foundations you choose to trust.
 
 ** Links
 
-- [[https://proof.kirancodes.me][Live fuzzing dashboard]] (16 AFL++ fuzzers, auto-updating)
 - [[https://github.com/kim-em/lean-zip][lean-zip on GitHub]]
 - [[https://github.com/leanprover/lean4/issues/13388][Lean 4 bug report]]
 
